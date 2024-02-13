@@ -70,7 +70,14 @@ cp ./package.json ./build
 cd ./build
 npm install --production
 cd ../..
-ls
+
+cd ./tag-notification-sender
+npm install
+npm run compile
+cp ./package.json ./build
+cd ./build
+npm install --production
+cd ../..
 
 echo "Deploying to $ENV environment in region $REGION using profile $PROFILE..."
 
@@ -103,5 +110,6 @@ sam deploy --capabilities CAPABILITY_IAM \
 
 echo "Cleaning build files"
 rm -rf ./tag-processor/build
+rm -rf ./tag-notification-sender/buid
 rm output.yaml
 

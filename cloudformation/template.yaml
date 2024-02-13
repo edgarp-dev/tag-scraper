@@ -5,9 +5,14 @@ Parameters:
   ENV:
     Description: Environment
     Type: String
-    
 
 Resources:
+  TagQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub tag-queue-${ENV}
+      VisibilityTimeout: 60
+  
   TagProcessorDynamoDb:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -39,6 +44,11 @@ Resources:
         Variables:
           TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
           TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
+      Events:
+        TagQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TagQueue.Arn
   
   TagNotificationSenderLambda:
     Type: AWS::Serverless::Function
@@ -50,9 +60,8 @@ Resources:
       Timeout: 60
       Architectures:
         - x86_64
-       Events:
+      Events:
         TagNotificationSNSTopic:
           Type: SNS
           Properties:
             Topic: !Ref TagNotificationTopic
-
