@@ -38,6 +38,7 @@ Resources:
       Handler: app.lambdaHandler
       Runtime: nodejs20.x
       Timeout: 60
+      Role: !GetAtt TagProcessorLambdaExecutionRole.Arn
       Architectures:
         - x86_64
       Environment:
@@ -49,6 +50,36 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt TagQueue.Arn
+  
+  TagProcessorLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub tag-processor-lambda-role-${ENV}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ChangeMessageVisibilityBatch
+                  - sqs:DeleteMessage
+                  - sqs:DeleteMessageBatch
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tag-queue-${ENV}
   
   TagNotificationSenderLambda:
     Type: AWS::Serverless::Function

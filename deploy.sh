@@ -98,7 +98,7 @@ sam package --output-template-file ./output.yaml \
     --template ./cloudformation/template.yaml
 
 STACK_NAME="tag-processor-stack-$ENV"
-sam deploy --capabilities CAPABILITY_IAM \
+sam deploy --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --no-confirm-changeset \
     --parameter-overrides ENV=dev \
     --profile "$PROFILE" \
