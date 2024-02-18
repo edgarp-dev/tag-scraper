@@ -1,98 +1,114 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  ENV:
-    Description: Environment
-    Type: String
+    ENV:
+        Description: Environment
+        Type: String
 
 Resources:
-  TagQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub tag-queue-${ENV}
-      VisibilityTimeout: 60
-  
-  TagProcessorDynamoDb:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub tag-processor-db-${ENV}
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-  
-  TagNotificationTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      DisplayName: !Sub tag-notification-topic-${ENV}
-  
-  TagProcessorLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub tag-processor-${ENV} 
-      CodeUri: ../tag-processor/build
-      Handler: app.lambdaHandler
-      Runtime: nodejs20.x
-      Timeout: 60
-      Role: !GetAtt TagProcessorLambdaExecutionRole.Arn
-      Architectures:
-        - x86_64
-      Environment:
-        Variables:
-          TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
-          TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
-      Events:
-        TagQueueEvent:
-          Type: SQS
-          Properties:
-            Queue: !GetAtt TagQueue.Arn
-  
-  TagProcessorLambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub tag-processor-lambda-role-${ENV}
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CloudWatchAccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:*
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - sqs:ChangeMessageVisibility
-                  - sqs:ChangeMessageVisibilityBatch
-                  - sqs:DeleteMessage
-                  - sqs:DeleteMessageBatch
-                  - sqs:GetQueueAttributes
-                  - sqs:ReceiveMessage
-                Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tag-queue-${ENV}
-  
-  TagNotificationSenderLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub tag-notification-sender-${ENV} 
-      CodeUri: ../tag-notification-sender/build
-      Handler: app.lambdaHandler
-      Runtime: nodejs20.x
-      Timeout: 60
-      Architectures:
-        - x86_64
-      Events:
-        TagNotificationSNSTopic:
-          Type: SNS
-          Properties:
-            Topic: !Ref TagNotificationTopic
+    TagQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Sub tag-queue-${ENV}
+            VisibilityTimeout: 60
+
+    TagProcessorDynamoDb:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            TableName: !Sub tag-processor-db-${ENV}
+            AttributeDefinitions:
+                - AttributeName: id
+                  AttributeType: S
+                - AttributeName: title
+                  AttributeType: S
+            KeySchema:
+                - AttributeName: id
+                  KeyType: HASH
+            GlobalSecondaryIndexes:
+                - IndexName: TitleIndex
+                  KeySchema:
+                      - AttributeName: title
+                        KeyType: HASH
+                  Projection:
+                      ProjectionType: ALL
+            BillingMode: PAY_PER_REQUEST
+
+    TagNotificationTopic:
+        Type: AWS::SNS::Topic
+        Properties:
+            DisplayName: !Sub tag-notification-topic-${ENV}
+
+    TagProcessorLambda:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub tag-processor-${ENV}
+            CodeUri: ../tag-processor/build
+            Handler: app.lambdaHandler
+            Runtime: nodejs20.x
+            Timeout: 60
+            Role: !GetAtt TagProcessorLambdaExecutionRole.Arn
+            Architectures:
+                - x86_64
+            Environment:
+                Variables:
+                    TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
+                    TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
+            Events:
+                TagQueueEvent:
+                    Type: SQS
+                    Properties:
+                        Queue: !GetAtt TagQueue.Arn
+
+    TagProcessorLambdaExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub tag-processor-lambda-role-${ENV}
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: lambda.amazonaws.com
+                      Action: sts:AssumeRole
+            Policies:
+                - PolicyName: CloudWatchAccessPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - logs:*
+                            Resource: "*"
+                          - Effect: Allow
+                            Action:
+                                - sqs:ChangeMessageVisibility
+                                - sqs:ChangeMessageVisibilityBatch
+                                - sqs:DeleteMessage
+                                - sqs:DeleteMessageBatch
+                                - sqs:GetQueueAttributes
+                                - sqs:ReceiveMessage
+                            Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tag-queue-${ENV}
+                          - Effect: Allow
+                            Action:
+                                - dynamodb:PutItem
+                                - dynamodb:Query
+                            Resource:
+                                - !GetAtt TagProcessorDynamoDb.Arn
+                                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tag-processor-db-${ENV}/index/*
+
+    TagNotificationSenderLambda:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub tag-notification-sender-${ENV}
+            CodeUri: ../tag-notification-sender/build
+            Handler: app.lambdaHandler
+            Runtime: nodejs20.x
+            Timeout: 60
+            Architectures:
+                - x86_64
+            Events:
+                TagNotificationSNSTopic:
+                    Type: SNS
+                    Properties:
+                        Topic: !Ref TagNotificationTopic

@@ -93,13 +93,7 @@ function wait(seconds: number): Promise<void> {
 
             const entries = [];
             for (const sale of activeSales) {
-                console.log('######');
-                const { title, price, image, link, isExpired } = sale;
-                console.log(title);
-                console.log(price);
-                console.log(image);
-                console.log(link);
-                console.log(isExpired);
+                const { title, price, image, link } = sale;
                 entries.push({
                     Id: uuidv4(),
                     MessageBody: title,
@@ -114,15 +108,11 @@ function wait(seconds: number): Promise<void> {
                         },
                         image: {
                             DataType: 'String',
-                            StringValue: 'test'
+                            StringValue: image ?? ''
                         },
                         link: {
                             DataType: 'String',
                             StringValue: link ?? ''
-                        },
-                        isExpired: {
-                            DataType: 'String',
-                            StringValue: isExpired.toString() ?? false
                         }
                     }
                 });
