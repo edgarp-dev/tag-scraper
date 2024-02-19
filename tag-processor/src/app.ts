@@ -6,15 +6,18 @@ import {
     QueryCommand
 } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
     try {
         const dbClient = new DynamoDBClient();
+        const snsClient = new SNSClient();
+
         const queueMessages = event.Records;
         for (const message of queueMessages) {
             const { image, price, link, title } = message.messageAttributes;
 
-            const { TAG_PROCESSOR_DB } = process.env;
+            const { TAG_PROCESSOR_DB, TAG_NOTIFICATION_TOPIC } = process.env;
 
             const queryParams = {
                 TableName: TAG_PROCESSOR_DB,
@@ -27,7 +30,6 @@ export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
             };
             const tagItem = await dbClient.send(new QueryCommand(queryParams));
 
-            console.log(tagItem);
             if (tagItem.Count === 0) {
                 console.log('ITEM NOT PROCESSED, SENDING NOTIFICATION');
 
@@ -42,11 +44,17 @@ export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
                     })
                 };
 
-                const pumItemResponse = await dbClient.send(
-                    new PutItemCommand(putItemParams)
-                );
+                await dbClient.send(new PutItemCommand(putItemParams));
 
-                console.log(pumItemResponse);
+                const publishParams = {
+                    TopicArn: TAG_NOTIFICATION_TOPIC,
+                    Message: JSON.stringify({ image, price, link, title })
+                };
+
+                const publishMessageResponse = await snsClient.send(
+                    new PublishCommand(publishParams)
+                );
+                console.log(publishMessageResponse);
             } else {
                 console.log('ITEM PROCESSED BEFORE');
             }

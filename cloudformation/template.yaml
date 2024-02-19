@@ -37,7 +37,7 @@ Resources:
     TagNotificationTopic:
         Type: AWS::SNS::Topic
         Properties:
-            DisplayName: !Sub tag-notification-topic-${ENV}
+            TopicName: !Sub tag-notification-topic-${ENV}
 
     TagProcessorLambda:
         Type: AWS::Serverless::Function
@@ -96,6 +96,10 @@ Resources:
                             Resource:
                                 - !GetAtt TagProcessorDynamoDb.Arn
                                 - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tag-processor-db-${ENV}/index/*
+                          - Effect: Allow
+                            Action:
+                                - sns:Publish
+                            Resource: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:tag-notification-topic-${ENV}
 
     TagNotificationSenderLambda:
         Type: AWS::Serverless::Function
@@ -105,6 +109,7 @@ Resources:
             Handler: app.lambdaHandler
             Runtime: nodejs20.x
             Timeout: 60
+            Role: !GetAtt TagNotificationSenderLambdaExecutionRole.Arn
             Architectures:
                 - x86_64
             Events:
@@ -112,3 +117,24 @@ Resources:
                     Type: SNS
                     Properties:
                         Topic: !Ref TagNotificationTopic
+
+    TagNotificationSenderLambdaExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub tag-notification-sender-lambda-role-${ENV}
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: lambda.amazonaws.com
+                      Action: sts:AssumeRole
+            Policies:
+                - PolicyName: CloudWatchAccessPolicy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - logs:*
+                            Resource: "*"

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.515.0",
+    "@aws-sdk/client-sns": "^3.516.0",
     "@aws-sdk/util-dynamodb": "^3.515.0",
     "esbuild": "^0.14.14",
     "uuid": "^9.0.1"
