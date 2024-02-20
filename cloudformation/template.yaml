@@ -6,6 +6,9 @@ Parameters:
         Description: Environment
         Type: String
 
+Conditions:
+  IsProdEnvironment: !Equals [ !Ref ENV, prod ]
+
 Resources:
     TagQueue:
         Type: AWS::SQS::Queue
@@ -112,6 +115,10 @@ Resources:
             Role: !GetAtt TagNotificationSenderLambdaExecutionRole.Arn
             Architectures:
                 - x86_64
+            Environment:
+                Variables:
+                    TELEGRAM_TOKEN: !If [ IsProdEnvironment, '{{resolve:ssm:/salesbot/prod/telegram:1}}', '{{resolve:ssm:/salesbot/dev/telegram:1}}' ]
+                    ENV: !Ref ENV
             Events:
                 TagNotificationSNSTopic:
                     Type: SNS

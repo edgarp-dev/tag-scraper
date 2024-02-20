@@ -6,11 +6,14 @@ import {
     SQSClient,
     SendMessageBatchCommand,
     SendMessageBatchRequest
-} from '@aws-sdk/client-sqs'; // ES Modules import
+} from '@aws-sdk/client-sqs';
+import NodeCache from 'node-cache';
+import cron from 'node-cron';
 
 dotenv.config();
 
 type Sale = {
+    articleId: string;
     title: string;
     price: string;
     image: string;
@@ -18,13 +21,15 @@ type Sale = {
     isExpired: boolean;
 };
 
+const cache = new NodeCache({ stdTTL: 604800 });
+
 function wait(seconds: number): Promise<void> {
     return new Promise((resolve) => {
         setTimeout(resolve, seconds * 1000);
     });
 }
 
-(async () => {
+async function scrapTags() {
     const browser = await puppeteer.launch({
         headless: 'new',
         args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -46,6 +51,7 @@ function wait(seconds: number): Promise<void> {
                 'article',
                 (articles) => {
                     return articles.map((article) => {
+                        console.log(article.id);
                         const threadLinkElement = article.querySelector(
                             '.thread-title .thread-link'
                         );
@@ -77,6 +83,7 @@ function wait(seconds: number): Promise<void> {
                             .textContent.trim();
 
                         return {
+                            articleId: article.id,
                             title: threadLinkElement.textContent,
                             price,
                             image,
@@ -93,48 +100,69 @@ function wait(seconds: number): Promise<void> {
 
             const entries = [];
             for (const sale of activeSales) {
-                const { title, price, image, link } = sale;
-                entries.push({
-                    Id: uuidv4(),
-                    MessageBody: title,
-                    MessageAttributes: {
-                        title: {
-                            DataType: 'String',
-                            StringValue: title ?? ''
-                        },
-                        price: {
-                            DataType: 'String',
-                            StringValue: price ?? ''
-                        },
-                        image: {
-                            DataType: 'String',
-                            StringValue: image ?? ''
-                        },
-                        link: {
-                            DataType: 'String',
-                            StringValue: link ?? ''
+                const { articleId, title, price, image, link } = sale;
+
+                const itemInCache = cache.get(articleId);
+
+                if (!itemInCache) {
+                    entries.push({
+                        Id: uuidv4(),
+                        MessageBody: title,
+                        MessageAttributes: {
+                            articleId: {
+                                DataType: 'String',
+                                StringValue: articleId
+                            },
+                            title: {
+                                DataType: 'String',
+                                StringValue: title ?? ''
+                            },
+                            price: {
+                                DataType: 'String',
+                                StringValue: price ?? ''
+                            },
+                            image: {
+                                DataType: 'String',
+                                StringValue: image ?? ''
+                            },
+                            link: {
+                                DataType: 'String',
+                                StringValue: link ?? ''
+                            }
                         }
-                    }
-                });
+                    });
+
+                    cache.set(articleId, articleId);
+                } else {
+                    console.log(`${articleId} in cache`);
+                }
             }
 
-            const sendMessageBatchInput: SendMessageBatchRequest = {
-                QueueUrl:
-                    'https://sqs.us-east-1.amazonaws.com/975050027353/tag-queue-dev',
-                Entries: entries
-            };
-            const sendMessageBatchCommand = new SendMessageBatchCommand(
-                sendMessageBatchInput
-            );
+            if (entries.length > 0) {
+                const sendMessageBatchInput: SendMessageBatchRequest = {
+                    QueueUrl:
+                        'https://sqs.us-east-1.amazonaws.com/975050027353/tag-queue-dev',
+                    Entries: entries
+                };
+                const sendMessageBatchCommand = new SendMessageBatchCommand(
+                    sendMessageBatchInput
+                );
 
-            console.log('SENDING QUEUE MESSAGES');
-            const response = await sqsClient.send(sendMessageBatchCommand);
-            console.log(response);
-            console.log('MESSAGES PUBLISHED');
+                console.log('SENDING QUEUE MESSAGES');
+                const response = await sqsClient.send(sendMessageBatchCommand);
+                console.log(response);
+                console.log(`${entries.length} MESSAGES PUBLISHED`);
+            } else {
+                console.log('NO MESSAGES SENT');
+            }
         }
     } catch (eror) {
         console.log(eror);
     }
 
     await browser.close();
-})();
+}
+
+cron.schedule('*/1 * * * *', async () => {
+    await scrapTags();
+});

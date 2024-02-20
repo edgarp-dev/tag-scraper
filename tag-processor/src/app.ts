@@ -33,22 +33,24 @@ export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
             if (tagItem.Count === 0) {
                 console.log('ITEM NOT PROCESSED, SENDING NOTIFICATION');
 
+                const saleItem = {
+                    id: uuid(),
+                    title: title.stringValue,
+                    image: image.stringValue,
+                    price: price.stringValue,
+                    link: link.stringValue
+                };
+
                 const putItemParams = {
                     TableName: TAG_PROCESSOR_DB,
-                    Item: marshall({
-                        id: uuid(),
-                        title: title.stringValue,
-                        image: image.stringValue,
-                        price: price.stringValue,
-                        link: link.stringValue
-                    })
+                    Item: marshall(saleItem)
                 };
 
                 await dbClient.send(new PutItemCommand(putItemParams));
 
                 const publishParams = {
                     TopicArn: TAG_NOTIFICATION_TOPIC,
-                    Message: JSON.stringify({ image, price, link, title })
+                    Message: JSON.stringify(saleItem)
                 };
 
                 const publishMessageResponse = await snsClient.send(
