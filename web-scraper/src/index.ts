@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import puppeteer, { PuppeteerLaunchOptions } from 'puppeteer';
 import dotenv from 'dotenv';
 import { fromEnv } from '@aws-sdk/credential-providers';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +22,8 @@ type Sale = {
 };
 
 const cache = new NodeCache({ stdTTL: 604800 });
+const { IS_LOCAL_HOST } = process.env;
+const VERSION = '0.0.1';
 
 function wait(seconds: number): Promise<void> {
     return new Promise((resolve) => {
@@ -30,19 +32,29 @@ function wait(seconds: number): Promise<void> {
 }
 
 async function scrapTags() {
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-
-    console.log('OPENING URL: https://www.promodescuentos.com/search?q=bug');
-    await page.goto('https://www.promodescuentos.com/search?q=bug');
-
-    console.log('DELAYING 3 SECONDS UNTIL ELEMENTS LOAD');
-    await wait(3);
-
     try {
+        console.log(`VERSION: ${VERSION}`);
+
+        const puppeteerConfig: PuppeteerLaunchOptions = {
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        };
+
+        if (!IS_LOCAL_HOST) {
+            puppeteerConfig['executablePath'] = '/usr/bin/google-chrome';
+        }
+
+        const browser = await puppeteer.launch(puppeteerConfig);
+        const page = await browser.newPage();
+
+        console.log(
+            'OPENING URL: https://www.promodescuentos.com/search?q=bug'
+        );
+        await page.goto('https://www.promodescuentos.com/search?q=bug');
+
+        console.log('DELAYING 3 SECONDS UNTIL ELEMENTS LOAD');
+        await wait(3);
+
         console.log('SCRAPING HTML ELEMENTS');
         const containerElement = await page.$('.js-threadList');
 
@@ -51,7 +63,6 @@ async function scrapTags() {
                 'article',
                 (articles) => {
                     return articles.map((article) => {
-                        console.log(article.id);
                         const threadLinkElement = article.querySelector(
                             '.thread-title .thread-link'
                         );
@@ -93,6 +104,8 @@ async function scrapTags() {
                     });
                 }
             );
+
+            await browser.close();
 
             console.log('FILTERING ACTIVE SALES');
             const activeSales = sales.filter((bug) => !bug.isExpired);
@@ -159,10 +172,12 @@ async function scrapTags() {
     } catch (eror) {
         console.log(eror);
     }
-
-    await browser.close();
 }
 
-cron.schedule('*/1 * * * *', async () => {
-    await scrapTags();
-});
+if (!IS_LOCAL_HOST) {
+    cron.schedule('*/1 * * * *', async () => {
+        await scrapTags();
+    });
+} else {
+    scrapTags();
+}
