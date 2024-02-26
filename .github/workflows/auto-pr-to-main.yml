@@ -9,6 +9,9 @@ on:
 jobs:
     create-pull-request:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
         if: github.event.pull_request.merged == true
         steps:
             - name: Check out the latest code
@@ -16,24 +19,20 @@ jobs:
               with:
                   ref: "dev"
 
-            - name: Create Pull Request to Main
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Setup Git
               run: |
-                  # Configure Git
                   git config --global user.name "GitHub Actions"
                   git config --global user.email "actions@github.com"
 
-                  # Create a new branch for the PR
+            - name: Create a new branch
+              run: |
                   PR_BRANCH="auto-pr-to-main-${GITHUB_RUN_ID}"
                   git checkout -b "$PR_BRANCH"
                   git push origin "$PR_BRANCH"
 
-                  # Create a PR to main using GitHub API
-                  RESPONSE=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" \
-                  https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls \
-                  -d "{\"title\":\"Merge dev into main\",\"head\":\"$PR_BRANCH\",\"base\":\"main\",\"body\":\"Automatically created PR to merge changes from dev to main.\"}")
-
-                  # Extract PR URL from response
-                  PR_URL=$(echo $RESPONSE | jq -r .html_url)
-                  echo "Pull Request created: $PR_URL"
+            - name: Create Pull Request to Main using GitHub CLI
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh auth setup-git
+                  gh pr create --base main --head "$PR_BRANCH" --title "Merge dev into main" --body "Automatically created PR to merge changes from dev to main."
