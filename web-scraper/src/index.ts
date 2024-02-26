@@ -23,7 +23,7 @@ type Sale = {
 
 const cache = new NodeCache({ stdTTL: 604800 });
 const { IS_LOCAL_HOST } = process.env;
-const VERSION = '0.0.1';
+const VERSION = '0.0.2';
 
 function wait(seconds: number): Promise<void> {
     return new Promise((resolve) => {
