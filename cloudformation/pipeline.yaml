@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Advanced CI/CD pipeline with CodeBuild and IAM roles, using GitHub as the source.
+
+Parameters:
+    Env:
+        Type: String
+    GitHubOwner:
+        Type: String
+    GitHubRepo:
+        Type: String
+    GitHubBranch:
+        Type: String
+        Default: main
+
+Resources:
+    ArtifactStoreBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+          BucketName: !Sub tag-scraper-pipeline-artifacts-${Env}
+
+    CodePipelineServiceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: ["codepipeline.amazonaws.com"]
+                      Action: ["sts:AssumeRole"]
+            Policies:
+                - PolicyName: !Sub tag-scraper-pipeline-role-${Env}
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - "codebuild:BatchGetBuilds"
+                                - "codebuild:StartBuild"
+                                - "s3:*"
+                                - "secretsmanager:GetSecretValue"
+                                - "codestar-connections:UseConnection"
+                            Resource: "*"
+
+    CodeBuildServiceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: ["codebuild.amazonaws.com"]
+                      Action: ["sts:AssumeRole"]
+            Policies:
+                - PolicyName: !Sub cb-tag-scrapper-sanity-role-${Env}
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - "logs:CreateLogGroup"
+                                - "logs:CreateLogStream"
+                                - "logs:PutLogEvents"
+                                - "s3:GetObject"
+                                - "s3:PutObject"
+                            Resource: "*"
+
+    CodeBuildProject:
+        Type: AWS::CodeBuild::Project
+        Properties:
+            Name: !Sub cb-tag-scrapper-sanity-${Env}
+            Description: "Build project for the CI/CD pipeline"
+            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+            Artifacts:
+                Type: CODEPIPELINE
+            Environment:
+                Type: LINUX_CONTAINER
+                ComputeType: BUILD_GENERAL1_SMALL
+                Image: aws/codebuild/standard:4.0
+            Source:
+                Type: CODEPIPELINE
+                BuildSpec: |
+                    version: 0.2
+                    phases:
+                      pre_build:
+                        commands:
+                          - echo Installing source dependencies...
+                      build:
+                        commands:
+                          - echo Running build commands...
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+
+    Pipeline:
+        Type: AWS::CodePipeline::Pipeline
+        Properties:
+            Name: !Sub tag-scraper-pipeline-${Env}
+            RoleArn: !GetAtt CodePipelineServiceRole.Arn
+            ArtifactStore:
+                Type: S3
+                Location: !Ref ArtifactStoreBucket
+            Stages:
+                - Name: Source
+                  Actions:
+                    - Name: GitHubSourceV2
+                      ActionTypeId:
+                        Category: Source
+                        Owner: AWS
+                        Version: 1
+                        Provider: CodeStarSourceConnection
+                      Configuration:
+                        ConnectionArn: '{{resolve:ssm:/edgarpdev/github/codestar-connection:1}}'
+                        FullRepositoryId: !Sub "${GitHubOwner}/${GitHubRepo}"
+                        BranchName: !Ref GitHubBranch
+                        OutputArtifactFormat: CODE_ZIP
+                      OutputArtifacts:
+                        - Name: SourceOutput
+                - Name: Build
+                  Actions:
+                      - Name: Sanity
+                        ActionTypeId:
+                            Category: Build
+                            Owner: AWS
+                            Version: 1
+                            Provider: CodeBuild
+                        Configuration:
+                            ProjectName: !Ref CodeBuildProject
+                        InputArtifacts:
+                            - Name: SourceOutput
+                        OutputArtifacts:
+                            - Name: BuildOutput
+
+Outputs:
+    PipelineUrl:
+        Description: "URL of the created pipeline"
+        Value: !Sub "https://console.aws.amazon.com/codesuite/codepipeline/pipelines/${Pipeline}/view"
