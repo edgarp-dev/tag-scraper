@@ -42,7 +42,7 @@ Resources:
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
-            Name: !Ref Name
+            Name: !Sub scrapper-sanity-${Env}
             ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
                 Type: CODEPIPELINE
