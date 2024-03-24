@@ -37,12 +37,13 @@ Resources:
                             Action:
                                 - s3:GetObject
                                 - s3:GetObjectVersion
-                            Resource: !Sub arn:aws:s3:::${ArtifactsBucket}/buildspecs/*
+                            Resource: *
 
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
             Name: !Ref Name
+            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
                 Type: CODEPIPELINE
             Environment:
@@ -57,4 +58,3 @@ Resources:
                       build:
                         commands:
                           - ls
-            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
