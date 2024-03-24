@@ -43,7 +43,6 @@ Resources:
                                 - "secretsmanager:GetSecretValue"
                                 - "codestar-connections:UseConnection"
                             Resource: "*"
-                         
 
     WebScraperValidation:
         Type: AWS::CloudFormation::Stack
@@ -54,6 +53,51 @@ Resources:
                 Name: !Sub scraper-validation
                 BuildSpec: ./buildpecs/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
+
+    CodeBuildServiceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: ["codebuild.amazonaws.com"]
+                      Action: ["sts:AssumeRole"]
+            Policies:
+                - PolicyName: !Sub cb-tag-scrapper-sanity-role-${Env}
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - "logs:CreateLogGroup"
+                                - "logs:CreateLogStream"
+                                - "logs:PutLogEvents"
+                                - "s3:GetObject"
+                                - "s3:PutObject"
+                            Resource: "*"
+
+    CodeBuildProject:
+        Type: AWS::CodeBuild::Project
+        Properties:
+            Name: !Sub cb-tag-scrapper-sanity-${Env}
+            Description: "Build project for the CI/CD pipeline"
+            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+            Artifacts:
+                Type: CODEPIPELINE
+            Environment:
+                Type: LINUX_CONTAINER
+                ComputeType: BUILD_GENERAL1_SMALL
+                Image: aws/codebuild/standard:4.0
+            Source:
+                Type: CODEPIPELINE
+                BuildSpec: |
+                    version: 0.2
+                    phases:
+                      build:
+                        commands:
+                          - ls
 
     Pipeline:
         Type: AWS::CodePipeline::Pipeline
@@ -88,7 +132,7 @@ Resources:
                             Version: 1
                             Provider: CodeBuild
                         Configuration:
-                            ProjectName: !Ref WebScraperValidation
+                            ProjectName: !Ref CodeBuildProject
                         InputArtifacts:
                             - Name: SourceOutput
                         OutputArtifacts:
