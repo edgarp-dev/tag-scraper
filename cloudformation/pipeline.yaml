@@ -52,7 +52,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 Name: !Sub ${Env}-web-scraper-validation
-                BuildSpec: ./buildspec/web-scraper-validation.yaml
+                BuildSpec: ./buildspec/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
     Pipeline:
