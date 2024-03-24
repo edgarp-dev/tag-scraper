@@ -51,7 +51,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 Name: !Sub scrapper-sanity-${Env}
-                BuildSpec: ./buildpecs/scraper_validation.yaml
+                BuildSpec: /cloudformation/buildpecs/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
     CodeBuildServiceRole:
@@ -132,7 +132,7 @@ Resources:
                             Version: 1
                             Provider: CodeBuild
                         Configuration:
-                            ProjectName: !Ref CodeBuildProject
+                            ProjectName: !Ref WebScraperValidation
                         InputArtifacts:
                             - Name: SourceOutput
                         OutputArtifacts:
