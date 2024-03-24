@@ -62,7 +62,7 @@ Resources:
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
-            Name: !Sub cb-tag-scrapper-sanity-${Env}
+            Name: !Sub tag-scrapper-sanity-${Env}
             Description: "Build project for the CI/CD pipeline"
             ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
