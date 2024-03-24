@@ -18,7 +18,7 @@ Resources:
     ArtifactStoreBucket:
         Type: AWS::S3::Bucket
         Properties:
-            BucketName: !Sub tag-scraper-pipeline-artifacts-${Env}
+            BucketName: !Sub tag-processor-pipeline-artifacts-${Env}
 
     CodePipelineServiceRole:
         Type: AWS::IAM::Role
@@ -52,7 +52,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 Name: !Sub web-scraper-validation-${Env}
-                BuildSpec: !Sub s3://${ArtifactsBucket}/cloudformation/buildpecs/scraper_validation.yaml
+                BuildSpec: !Sub s3://${ArtifactsBucket}/buildpecs/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
     Pipeline:
