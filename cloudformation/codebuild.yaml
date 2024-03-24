@@ -52,4 +52,9 @@ Resources:
                 Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
             Source:
                 Type: CODEPIPELINE
-                BuildSpec: !Ref BuildSpec
+                BuildSpec: |
+                    version: 0.2
+                    phases:
+                      build:
+                        commands:
+                          - ls
