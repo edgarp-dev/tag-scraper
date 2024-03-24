@@ -51,7 +51,7 @@ Resources:
             TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
             Parameters:
                 Env: !Ref Env
-                Name: !Sub ${Env}-web-scraper-validation
+                Name: !Sub web-scraper-validation-${Env}
                 BuildSpec: !Sub s3://${ArtifactsBucket}/cloudformation/buildpecs/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
