@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A CloudFormation template that creates a CodeBuild project with an embedded buildspec.
+
+Parameters:
+    Env:
+        Type: String
+    Name:
+        Type: String
+    BuildSpec:
+        Type: String
+    ArtifactsBucket:
+        Type: String
+
+Resources:
+    CodeBuildServiceRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: codebuild.amazonaws.com
+                      Action: sts:AssumeRole
+            Policies:
+                - PolicyName: !Sub ${Env}-code-build-access-policy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - logs:CreateLogGroup
+                                - logs:CreateLogStream
+                                - logs:PutLogEvents
+                            Resource: arn:aws:logs:*:*:*
+                          - Effect: Allow
+                            Action:
+                                - s3:GetObject
+                                - s3:GetObjectVersion
+                            Resource: !Sub arn:aws:s3:::${ArtifactsBucket}/buildspecs/*
+
+    CodeBuildProject:
+        Type: AWS::CodeBuild::Project
+        Properties:
+            Name: !Ref Name
+            Artifacts:
+                Type: CODEPIPELINE
+            Environment:
+                Type: ARM_LAMBDA_CONTAINER
+                ComputeType: BUILD_LAMBDA_1GB
+                Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
+            Source:
+                Type: CODEPIPELINE
+                BuildSpec: !Ref BuildSpec
+            ServiceRole: !GetAtt CodeBuildServiceRole.Arn

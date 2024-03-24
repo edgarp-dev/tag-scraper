@@ -1,6 +1,7 @@
 #!/bin/bash
 
 REGION="us-east-1"
+BRANCH=main
 
 show_help() {
     echo "Usage: deploy.sh [OPTIONS]"
@@ -10,6 +11,7 @@ show_help() {
     echo "  -e, --env <environment>   Environment to deploy (dev or prod)"
     echo "  -p, --profile <profile>   AWS profile"
     echo "  -r, --region <region>     AWS region"
+    echo "  -c, --current-branch      Use the current git branch"
     echo "  -h, --help                Show this help message"
 }
 
@@ -31,6 +33,10 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        -c|--current-branch)
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            shift
+            ;;
         -h|--help)
             show_help
             exit 0
@@ -49,17 +55,30 @@ if [ -z "$ENV" ] || [ -z "$PROFILE" ]; then
     exit 1
 fi
 
-if [ "$ENV" != "prod" ]; then
-    echo "Error: Invalid environment. Allowed value is prod."
+if [[ "$ENV" != "prod" && "$ENV" != "dev" ]]; then
+    echo "Error: Invalid environment. Allowed values are prod and dev"
     exit 1
 fi
+
+BUCKET_NAME="tag-processor-pipeline-artifacts-$ENV"
+if awsv2 s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+    echo "Bucket $BUCKET_NAME already exists."
+else
+    echo "Bucket $BUCKET_NAME does not exist. Creating..."
+    awsv2 s3api create-bucket --bucket "$BUCKET_NAME" --region "$REGION" --profile "$PROFILE"
+    echo "Bucket $BUCKET_NAME created."
+fi
+
+
+echo "Syncing pipeline artifacts"
+awsv2 s3 sync ./cloudformation s3://$BUCKET_NAME
 
 echo "Deploying pipeline"
 STACK_NAME="tag-scraper-pipeline-$ENV"
 awsv2 cloudformation deploy \
-    --template-file ./pipeline.yaml \
+    --template-file ./cloudformation/pipeline.yaml \
     --stack-name $STACK_NAME \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-    --parameter-overrides Env=prod GitHubOwner=edgarp-dev GitHubRepo=tag-scraper GitHubBranch=main \
+    --parameter-overrides Env=$ENV GitHubOwner=edgarp-dev GitHubRepo=tag-scraper GitHubBranch=$BRANCH ArtifactsBucket=$BUCKET_NAME \
     --profile $PROFILE \
     --region $REGION

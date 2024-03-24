@@ -11,12 +11,14 @@ Parameters:
     GitHubBranch:
         Type: String
         Default: main
+    ArtifactsBucket:
+        Type: String
 
 Resources:
     ArtifactStoreBucket:
         Type: AWS::S3::Bucket
         Properties:
-          BucketName: !Sub tag-scraper-pipeline-artifacts-${Env}
+            BucketName: !Sub tag-scraper-pipeline-artifacts-${Env}
 
     CodePipelineServiceRole:
         Type: AWS::IAM::Role
@@ -41,57 +43,17 @@ Resources:
                                 - "secretsmanager:GetSecretValue"
                                 - "codestar-connections:UseConnection"
                             Resource: "*"
+                         
 
-    CodeBuildServiceRole:
-        Type: AWS::IAM::Role
+    WebScraperValidation:
+        Type: AWS::CloudFormation::Stack
         Properties:
-            AssumeRolePolicyDocument:
-                Version: "2012-10-17"
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service: ["codebuild.amazonaws.com"]
-                      Action: ["sts:AssumeRole"]
-            Policies:
-                - PolicyName: !Sub cb-tag-scrapper-sanity-role-${Env}
-                  PolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                          - Effect: Allow
-                            Action:
-                                - "logs:CreateLogGroup"
-                                - "logs:CreateLogStream"
-                                - "logs:PutLogEvents"
-                                - "s3:GetObject"
-                                - "s3:PutObject"
-                            Resource: "*"
-
-    CodeBuildProject:
-        Type: AWS::CodeBuild::Project
-        Properties:
-            Name: !Sub cb-tag-scrapper-sanity-${Env}
-            Description: "Build project for the CI/CD pipeline"
-            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-            Artifacts:
-                Type: CODEPIPELINE
-            Environment:
-                Type: LINUX_CONTAINER
-                ComputeType: BUILD_GENERAL1_SMALL
-                Image: aws/codebuild/standard:4.0
-            Source:
-                Type: CODEPIPELINE
-                BuildSpec: |
-                    version: 0.2
-                    phases:
-                      pre_build:
-                        commands:
-                          - echo Installing source dependencies...
-                      build:
-                        commands:
-                          - echo Running build commands...
-                      post_build:
-                        commands:
-                          - echo Build completed on `date`
+            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+            Parameters:
+                Env: !Ref Env
+                Name: !Sub ${Env}-web-scraper-validation
+                BuildSpec: ./buildspec/web-scraper-validation.yaml
+                ArtifactsBucket: !Ref ArtifactsBucket
 
     Pipeline:
         Type: AWS::CodePipeline::Pipeline
@@ -104,19 +66,19 @@ Resources:
             Stages:
                 - Name: Source
                   Actions:
-                    - Name: GitHubSourceV2
-                      ActionTypeId:
-                        Category: Source
-                        Owner: AWS
-                        Version: 1
-                        Provider: CodeStarSourceConnection
-                      Configuration:
-                        ConnectionArn: '{{resolve:ssm:/edgarpdev/github/codestar-connection:1}}'
-                        FullRepositoryId: !Sub "${GitHubOwner}/${GitHubRepo}"
-                        BranchName: !Ref GitHubBranch
-                        OutputArtifactFormat: CODE_ZIP
-                      OutputArtifacts:
-                        - Name: SourceOutput
+                      - Name: GitHub
+                        ActionTypeId:
+                            Category: Source
+                            Owner: AWS
+                            Version: 1
+                            Provider: CodeStarSourceConnection
+                        Configuration:
+                            ConnectionArn: "{{resolve:ssm:/edgarpdev/github/codestar-connection:1}}"
+                            FullRepositoryId: !Sub "${GitHubOwner}/${GitHubRepo}"
+                            BranchName: !Ref GitHubBranch
+                            OutputArtifactFormat: CODE_ZIP
+                        OutputArtifacts:
+                            - Name: SourceOutput
                 - Name: Build
                   Actions:
                       - Name: Sanity
@@ -126,7 +88,7 @@ Resources:
                             Version: 1
                             Provider: CodeBuild
                         Configuration:
-                            ProjectName: !Ref CodeBuildProject
+                            ProjectName: !Ref WebScraperValidation
                         InputArtifacts:
                             - Name: SourceOutput
                         OutputArtifacts:
