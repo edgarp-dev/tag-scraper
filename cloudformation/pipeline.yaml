@@ -51,7 +51,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 Name: !Sub scrapper-sanity-${Env}
-                BuildSpec: cloudformation/buildspecs/sanity.yaml
+                BuildSpec: cloudformation/buildspecs/sanity.yml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
     CodeBuildServiceRole:
