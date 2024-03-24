@@ -37,7 +37,7 @@ Resources:
                             Action:
                                 - s3:GetObject
                                 - s3:GetObjectVersion
-                            Resource: *
+                            Resource: "*"
 
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
@@ -52,9 +52,4 @@ Resources:
                 Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
             Source:
                 Type: CODEPIPELINE
-                BuildSpec: |
-                    version: 0.2
-                    phases:
-                      build:
-                        commands:
-                          - ls
+                BuildSpec: !Ref BuildSpec

@@ -50,7 +50,7 @@ Resources:
             TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
             Parameters:
                 Env: !Ref Env
-                Name: !Sub scraper-validation
+                Name: !Sub scrapper-sanity-${Env}
                 BuildSpec: ./buildpecs/scraper_validation.yaml
                 ArtifactsBucket: !Ref ArtifactsBucket
 
