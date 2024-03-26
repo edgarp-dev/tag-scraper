@@ -47,12 +47,11 @@ Resources:
     WebScraperValidation:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+            TemplateURL: !Sub https://s3-${AWS::Region}.amazonaws.com/${ArtifactsBucket}/s3.amazonaws.com/codebuild.yaml
             Parameters:
                 Env: !Ref Env
-                Name: !Sub scrapper-sanity-${Env}
-                BuildSpec: cloudformation/buildspecs/sanity.yml
-                ArtifactsBucket: !Ref ArtifactsBucket
+                Name: scrapper-sanity
+                BuildSpec: buildspecs/sanity.yml
 
     CodeBuildServiceRole:
         Type: AWS::IAM::Role

@@ -72,6 +72,7 @@ fi
 
 echo "Syncing pipeline artifacts"
 awsv2 s3 sync ./cloudformation s3://$BUCKET_NAME
+awsv2 s3 sync ./buildspecs s3://$BUCKET_NAME
 
 echo "Deploying pipeline"
 STACK_NAME="tag-processor-pipeline-$ENV"

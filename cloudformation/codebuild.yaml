@@ -4,11 +4,9 @@ Description: A CloudFormation template that creates a CodeBuild project with an 
 Parameters:
     Env:
         Type: String
-    Name:
+    ProjectName:
         Type: String
     BuildSpec:
-        Type: String
-    ArtifactsBucket:
         Type: String
 
 Resources:
@@ -39,43 +37,22 @@ Resources:
                                 - s3:GetObjectVersion
                             Resource: "*"
 
-    # CodeBuildProject:
-    #     Type: AWS::CodeBuild::Project
-    #     Properties:
-    #         Name: test-1
-    #         ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-    #         Artifacts:
-    #             Type: CODEPIPELINE
-    #         Environment:
-    #             Type: ARM_LAMBDA_CONTAINER
-    #             ComputeType: BUILD_LAMBDA_1GB
-    #             Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
-    #         Source:
-    #             Type: CODEPIPELINE
-    #             BuildSpec: |
-    #                 version: 0.2
-    #                 phases:
-    #                   build:
-    #                     commands:
-    #                       - ls
-
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
-            Name: !Sub tag-scrapper-sanity-${Env}
-            Description: "Build project for the CI/CD pipeline"
+            Name: !Sub ${ProjectName}-codebuild-${Env} 
             ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
                 Type: CODEPIPELINE
             Environment:
-                Type: LINUX_CONTAINER
-                ComputeType: BUILD_GENERAL1_SMALL
-                Image: aws/codebuild/standard:4.0
+                Type: ARM_LAMBDA_CONTAINER
+                ComputeType: BUILD_LAMBDA_1GB
+                Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
             Source:
                 Type: CODEPIPELINE
-                BuildSpec: |
-                    version: 0.2
-                    phases:
-                      build:
-                        commands:
-                          - ls
+                BuildSpec: !Ref BuildSpec
+
+Outputs:
+    BuildConfig:
+        Description: Build Configuration
+        Value: !Ref CodeBuildProject
