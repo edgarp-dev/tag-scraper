@@ -64,15 +64,15 @@ Resources:
         BuildSpec: buildspecs/sanity-check.yaml
         WorkDir: tag-notification-sender
 
-    # TagProcessorSanity:
-    #   Type: AWS::CloudFormation::Stack
-    #   Properties:
-    #   TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
-    #   Parameters:
-    #     Env: !Ref Env
-    #     ProjectName: tag-processor
-    #     BuildSpec: buildspecs/sanity-check.yaml
-    #     WorkDir: tag-processor
+  TagProcessorSanity:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      Parameters:
+        Env: !Ref Env
+        ProjectName: tag-processor
+        BuildSpec: buildspecs/sanity-check.yaml
+        WorkDir: tag-processor
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -101,17 +101,6 @@ Resources:
               RunOrder: 1
         - Name: Build
           Actions:
-            - Name: web-scraper-sanity
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !GetAtt WebScraperSanity.Outputs.BuildConfig
-              InputArtifacts:
-                - Name: SourceOutput
-              RunOrder: 2
             - Name: tag-notification-sender-sanity
               ActionTypeId:
                 Category: Build
@@ -120,6 +109,28 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !GetAtt TagNotificationSenderSanity.Outputs.BuildConfig
+              InputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 2
+            - Name: tag-processor-sanity
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !GetAtt TagProcessorSanity.Outputs.BuildConfig
+              InputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 2
+            - Name: web-scraper-sanity
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !GetAtt WebScraperSanity.Outputs.BuildConfig
               InputArtifacts:
                 - Name: SourceOutput
               RunOrder: 2
