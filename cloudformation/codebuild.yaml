@@ -10,6 +10,48 @@ Parameters:
         Type: String
 
 Resources:
+    # CodeBuildServiceRole:
+    #     Type: AWS::IAM::Role
+    #     Properties:
+    #         AssumeRolePolicyDocument:
+    #             Version: "2012-10-17"
+    #             Statement:
+    #                 - Effect: Allow
+    #                   Principal:
+    #                       Service: codebuild.amazonaws.com
+    #                   Action: sts:AssumeRole
+    #         Policies:
+    #             - PolicyName: !Sub ${Env}-code-build-access-policy
+    #               PolicyDocument:
+    #                   Version: "2012-10-17"
+    #                   Statement:
+    #                       - Effect: Allow
+    #                         Action:
+    #                             - logs:CreateLogGroup
+    #                             - logs:CreateLogStream
+    #                             - logs:PutLogEvents
+    #                         Resource: arn:aws:logs:*:*:*
+    #                       - Effect: Allow
+    #                         Action:
+    #                             - s3:GetObject
+    #                             - s3:GetObjectVersion
+    #                         Resource: "*"
+
+    # CodeBuildProject:
+    #     Type: AWS::CodeBuild::Project
+    #     Properties:
+    #         Name: !Sub ${ProjectName}-codebuild-${Env} 
+    #         ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+    #         Artifacts:
+    #             Type: CODEPIPELINE
+    #         Environment:
+    #             Type: ARM_LAMBDA_CONTAINER
+    #             ComputeType: BUILD_LAMBDA_1GB
+    #             Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
+    #         Source:
+    #             Type: CODEPIPELINE
+    #             BuildSpec: !Ref BuildSpec
+
     CodeBuildServiceRole:
         Type: AWS::IAM::Role
         Properties:
@@ -18,39 +60,42 @@ Resources:
                 Statement:
                     - Effect: Allow
                       Principal:
-                          Service: codebuild.amazonaws.com
-                      Action: sts:AssumeRole
+                          Service: ["codebuild.amazonaws.com"]
+                      Action: ["sts:AssumeRole"]
             Policies:
-                - PolicyName: !Sub ${Env}-code-build-access-policy
+                - PolicyName: !Sub cb-tag-scrapper-sanity-role-${Env}
                   PolicyDocument:
                       Version: "2012-10-17"
                       Statement:
                           - Effect: Allow
                             Action:
-                                - logs:CreateLogGroup
-                                - logs:CreateLogStream
-                                - logs:PutLogEvents
-                            Resource: arn:aws:logs:*:*:*
-                          - Effect: Allow
-                            Action:
-                                - s3:GetObject
-                                - s3:GetObjectVersion
+                                - "logs:CreateLogGroup"
+                                - "logs:CreateLogStream"
+                                - "logs:PutLogEvents"
+                                - "s3:GetObject"
+                                - "s3:PutObject"
                             Resource: "*"
 
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
-            Name: !Sub ${ProjectName}-codebuild-${Env} 
+            Name: !Sub cb-tag-scrapper-sanity-${Env}
+            Description: "Build project for the CI/CD pipeline"
             ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
                 Type: CODEPIPELINE
             Environment:
-                Type: ARM_LAMBDA_CONTAINER
-                ComputeType: BUILD_LAMBDA_1GB
-                Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
+                Type: LINUX_CONTAINER
+                ComputeType: BUILD_GENERAL1_SMALL
+                Image: aws/codebuild/standard:4.0
             Source:
                 Type: CODEPIPELINE
-                BuildSpec: !Ref BuildSpec
+                BuildSpec: |
+                    version: 0.2
+                    phases:
+                      build:
+                        commands:
+                          - ls
 
 Outputs:
     BuildConfig:
