@@ -51,7 +51,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 ProjectName: scrapper-sanity
-                BuildSpec: "buildspecs/sanity.yaml"
+                BuildSpec: buildspecs/sanity.yaml
 
     Pipeline:
         Type: AWS::CodePipeline::Pipeline
