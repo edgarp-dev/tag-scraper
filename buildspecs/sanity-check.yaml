@@ -5,7 +5,8 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd /$WORK_DIR
+      - ls
+      - cd ./$WORK_DIR
       - echo Installing source NPM dependencies...
       - npm install
   build:
