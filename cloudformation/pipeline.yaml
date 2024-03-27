@@ -51,7 +51,7 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 ProjectName: scrapper-sanity
-                BuildSpec: buildspecs/sanity.yml
+                BuildSpec: "buildspecs/sanity.yml"
 
     CodeBuildServiceRole:
         Type: AWS::IAM::Role
