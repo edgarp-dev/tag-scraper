@@ -50,13 +50,13 @@ Resources:
                 Type: ARM_LAMBDA_CONTAINER
                 ComputeType: BUILD_LAMBDA_1GB
                 Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
+                EnvironmentVariables:
+                    - Name: WORK_DIR
+                      Value: !Ref WorkDir
+                      Type: PLAINTEXT
             Source:
                 Type: CODEPIPELINE
                 BuildSpec: !Ref BuildSpec
-            EnvironmentVariables:
-                - Name: WORK_DIR
-                  Value: !Ref WorkDir
-                  Type: PLAINTEXT
 
 Outputs:
     BuildConfig:
