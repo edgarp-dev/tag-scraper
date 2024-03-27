@@ -51,7 +51,8 @@ Resources:
             Parameters:
                 Env: !Ref Env
                 ProjectName: web-scraper-checks
-                BuildSpec: buildspecs/web-scraper-checks.yaml
+                BuildSpec: buildspecs/sanity-check.yaml
+                WorkDir: web-scraper
 
     Pipeline:
         Type: AWS::CodePipeline::Pipeline
@@ -79,7 +80,7 @@ Resources:
                             - Name: SourceOutput
                 - Name: Build
                   Actions:
-                      - Name: Sanity
+                      - Name: web-scraper-sanity
                         ActionTypeId:
                             Category: Build
                             Owner: AWS

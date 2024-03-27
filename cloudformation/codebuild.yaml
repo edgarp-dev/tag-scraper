@@ -8,6 +8,8 @@ Parameters:
         Type: String
     BuildSpec:
         Type: String
+    WorkDir:
+        Type: String
 
 Resources:
     CodeBuildServiceRole:
@@ -40,7 +42,7 @@ Resources:
     CodeBuildProject:
         Type: AWS::CodeBuild::Project
         Properties:
-            Name: !Sub ${ProjectName}-codebuild-${Env} 
+            Name: !Sub ${ProjectName}-codebuild-${Env}
             ServiceRole: !GetAtt CodeBuildServiceRole.Arn
             Artifacts:
                 Type: CODEPIPELINE
@@ -51,7 +53,10 @@ Resources:
             Source:
                 Type: CODEPIPELINE
                 BuildSpec: !Ref BuildSpec
-
+            EnvironmentVariables:
+                - Name: WORK_DIR
+                  Value: !Ref WorkDir
+                  Type: PLAINTEXT
 
 Outputs:
     BuildConfig:

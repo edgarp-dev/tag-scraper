@@ -5,7 +5,7 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd web-scraper
+      - cd /$WORK_DIR
       - echo Installing source NPM dependencies...
       - npm install
   build:
