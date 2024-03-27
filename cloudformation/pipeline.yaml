@@ -64,6 +64,16 @@ Resources:
         BuildSpec: buildspecs/sanity-check.yaml
         WorkDir: tag-notification-sender
 
+    # TagProcessorSanity:
+    #   Type: AWS::CloudFormation::Stack
+    #   Properties:
+    #   TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+    #   Parameters:
+    #     Env: !Ref Env
+    #     ProjectName: tag-processor
+    #     BuildSpec: buildspecs/sanity-check.yaml
+    #     WorkDir: tag-processor
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
