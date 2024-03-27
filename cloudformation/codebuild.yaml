@@ -2,63 +2,63 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: A CloudFormation template that creates a CodeBuild project with an embedded buildspec.
 
 Parameters:
-    Env:
-        Type: String
-    ProjectName:
-        Type: String
-    BuildSpec:
-        Type: String
-    WorkDir:
-        Type: String
+  Env:
+    Type: String
+  ProjectName:
+    Type: String
+  BuildSpec:
+    Type: String
+  WorkDir:
+    Type: String
 
 Resources:
-    CodeBuildServiceRole:
-        Type: AWS::IAM::Role
-        Properties:
-            AssumeRolePolicyDocument:
-                Version: "2012-10-17"
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service: codebuild.amazonaws.com
-                      Action: sts:AssumeRole
-            Policies:
-                - PolicyName: !Sub ${Env}-code-build-access-policy
-                  PolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                          - Effect: Allow
-                            Action:
-                                - logs:CreateLogGroup
-                                - logs:CreateLogStream
-                                - logs:PutLogEvents
-                            Resource: arn:aws:logs:*:*:*
-                          - Effect: Allow
-                            Action:
-                                - s3:GetObject
-                                - s3:GetObjectVersion
-                            Resource: "*"
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${Env}-code-build-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource: "*"
 
-    CodeBuildProject:
-        Type: AWS::CodeBuild::Project
-        Properties:
-            Name: !Sub ${ProjectName}-codebuild-${Env}
-            ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-            Artifacts:
-                Type: CODEPIPELINE
-            Environment:
-                Type: ARM_LAMBDA_CONTAINER
-                ComputeType: BUILD_LAMBDA_1GB
-                Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
-                EnvironmentVariables:
-                    - Name: WORK_DIR
-                      Value: !Ref WorkDir
-                      Type: PLAINTEXT
-            Source:
-                Type: CODEPIPELINE
-                BuildSpec: !Ref BuildSpec
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-codebuild-${Env}
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: ARM_LAMBDA_CONTAINER
+        ComputeType: BUILD_LAMBDA_1GB
+        Image: aws/codebuild/amazonlinux-aarch64-lambda-standard:nodejs20
+        EnvironmentVariables:
+          - Name: WORK_DIR
+            Value: !Ref WorkDir
+            Type: PLAINTEXT
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref BuildSpec
 
 Outputs:
-    BuildConfig:
-        Description: Build Configuration
-        Value: !Ref CodeBuildProject
+  BuildConfig:
+    Description: Build Configuration
+    Value: !Ref CodeBuildProject
