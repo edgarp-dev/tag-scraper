@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd web-scraper
+      - echo Installing source NPM dependencies...
+      - npm install
+  build:
+    commands:
+      - echo Running the sanity command...
+      - cd web-scraper
+      - npm run sanity

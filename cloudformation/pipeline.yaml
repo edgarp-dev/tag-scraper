@@ -50,8 +50,8 @@ Resources:
             TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
             Parameters:
                 Env: !Ref Env
-                ProjectName: scrapper-sanity
-                BuildSpec: buildspecs/sanity.yaml
+                ProjectName: scrapper-checks
+                BuildSpec: buildspecs/web-scraper-checks.yaml
 
     Pipeline:
         Type: AWS::CodePipeline::Pipeline
