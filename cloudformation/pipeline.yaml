@@ -82,7 +82,6 @@ Resources:
         Env: !Ref Env
         ProjectName: deploy-aws-resources
         BuildSpec: buildspecs/deploy.yaml
-        WorkDir: /
 
   DeployToDockerHub:
     Type: AWS::CloudFormation::Stack
@@ -92,7 +91,7 @@ Resources:
         Env: !Ref Env
         ProjectName: deploy-docker-hub
         BuildSpec: buildspecs/docker-hub-deploy.yaml
-        WorkDir: /
+        DockerPassword:  "{{resolve:ssm:/edgarpdev/dockerhub/info:1}}"
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline

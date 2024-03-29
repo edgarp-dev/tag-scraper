@@ -10,6 +10,10 @@ Parameters:
     Type: String
   WorkDir:
     Type: String
+    Default: ''
+  DockerPassword:
+    Type: String
+    Default: ''
 
 Resources:
   CodeBuildServiceRole:
@@ -69,7 +73,7 @@ Resources:
             Value: !Ref Env
             Type: PLAINTEXT
           - Name: DOCKER_PASSWORD
-            Value: "{{resolve:ssm:/edgarpdev/dockerhub/info:1}}"
+            Value: !Ref DockerPassword
             Type: PARAMETER_STORE
           - Name: DOCKER_USERNAME
             Value: edgarpdev
