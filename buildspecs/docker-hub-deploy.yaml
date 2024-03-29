@@ -9,4 +9,5 @@ phases:
     commands:
       - echo Building the Docker image...
       - cd ./web-scraper
+      - chmod +x ./deploy-to-docker-hub.sh
       - ./deploy-to-docker-hub.sh
