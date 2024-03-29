@@ -10,10 +10,10 @@ Parameters:
     Type: String
   WorkDir:
     Type: String
-    Default: ''
+    Default: ""
   DockerPassword:
     Type: String
-    Default: ''
+    Default: ""
 
 Resources:
   CodeBuildServiceRole:
@@ -74,7 +74,7 @@ Resources:
             Type: PLAINTEXT
           - Name: DOCKER_PASSWORD
             Value: !Ref DockerPassword
-            Type: PARAMETER_STORE
+            Type: PLAINTEXT
           - Name: DOCKER_USERNAME
             Value: edgarpdev
             Type: PLAINTEXT
