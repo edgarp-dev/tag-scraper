@@ -10,4 +10,4 @@ phases:
   build:
     commands:
       - echo "Running the deploy.sh script."
-      - ./deploy.sh -e ${ENV}
+      - ./deploy.sh -e ${ENV} --pipeline
