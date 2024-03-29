@@ -6,8 +6,7 @@ phases:
       python: 3.11
     commands:
       - echo "Installing Python packages listed in requirements.txt"
-      # - pip install -r requirements.txt
-      - ls -a
+      - pip install --ignore-installed -r requirements.txt
   # build:
   #   commands:
   #     - echo "Running the deploy.sh script."
