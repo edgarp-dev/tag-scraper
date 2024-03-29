@@ -83,11 +83,11 @@ echo "Deploying to $ENV environment in region $REGION using profile $PROFILE..."
 
 
 BUCKET_NAME="tag-processor-artifacts-$ENV"
-if awsv2 s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
     echo "Bucket $BUCKET_NAME already exists."
 else
     echo "Bucket $BUCKET_NAME does not exist. Creating..."
-    awsv2 s3api create-bucket --bucket "$BUCKET_NAME" --region "$REGION" --profile "$PROFILE"
+    aws s3api create-bucket --bucket "$BUCKET_NAME" --region "$REGION" --profile "$PROFILE"
     echo "Bucket $BUCKET_NAME created."
 fi
 
