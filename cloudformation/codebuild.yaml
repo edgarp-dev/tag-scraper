@@ -68,6 +68,12 @@ Resources:
           - Name: ENV
             Value: !Ref Env
             Type: PLAINTEXT
+          - Name: DOCKER_PASSWORD
+            Value: '{{resolve:ssm:/edgarpdev/dockerhub/info:1}}'
+            Type: PARAMETER_STORE
+          - Name: DOCKER_USERNAME
+            Value: edgarpdev
+            Type: PLAINTEXT
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Ref BuildSpec

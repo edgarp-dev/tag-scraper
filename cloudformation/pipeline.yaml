@@ -84,6 +84,16 @@ Resources:
         BuildSpec: buildspecs/deploy.yaml
         WorkDir: /
 
+  DeployToDockerHub:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      Parameters:
+        Env: !Ref Env
+        ProjectName: deploy-docker-hub
+        BuildSpec: buildspecs/docker-hub-deploy.yaml
+        WorkDir: /
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -157,6 +167,17 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
               RunOrder: 3
+            - Name: deploy-docker-hub
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !GetAtt DeployToDockerHub.Outputs.BuildConfig
+              InputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 4
 
 Outputs:
   PipelineUrl:
