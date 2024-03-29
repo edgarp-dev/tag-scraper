@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REGION="us-east-1"
-PIPELINE_MODE=false  # Default value indicating --pipeline is not set
+PIPELINE_MODE=false
 
 show_help() {
     echo "Usage: deploy.sh [OPTIONS]"
@@ -90,7 +90,7 @@ npm install
 npm run compile
 cp ./package.json ./build
 cd ./build
-npm install --production
+npm install --omit=dev
 cd ../..
 
 cd ./tag-notification-sender
@@ -98,7 +98,7 @@ npm install
 npm run compile
 cp ./package.json ./build
 cd ./build
-npm install --production
+npm install --omit=dev
 cd ../..
 
 echo "Deploying to $ENV environment in region $REGION..."

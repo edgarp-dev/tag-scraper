@@ -47,6 +47,7 @@ Resources:
                   - 'sqs:*'
                   - 'sns:*'
                   - 'iam:PassRole'
+                  - 'ssm:*'
                 Resource: '*'
 
   CodeBuildProject:
