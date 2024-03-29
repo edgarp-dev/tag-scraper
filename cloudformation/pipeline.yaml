@@ -86,12 +86,13 @@ Resources:
   DeployToDockerHub:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/docker-codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: deploy-docker-hub
         BuildSpec: buildspecs/docker-hub-deploy.yaml
         DockerPassword:  "{{resolve:ssm:/edgarpdev/dockerhub/info:1}}"
+        DockerUsername: edgarpdev
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline

@@ -1,11 +1,6 @@
 version: 0.2
 
 phases:
-  install:
-    commands:
-      - apt-get update
-      - apt-get install -y docker.io
-      - service docker start
   pre_build:
     commands:
       - echo Logging in to Docker Hub...

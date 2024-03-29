@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A CloudFormation template that creates a CodeBuild project to deploy docker images.
+
+Parameters:
+  Env:
+    Type: String
+  ProjectName:
+    Type: String
+  BuildSpec:
+    Type: String
+  DockerPassword:
+    Type: String
+  DockerUsername:
+    Type: String
+
+Resources:
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${Env}-docker-codebuild-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "cloudformation:*"
+                  - "iam:*"
+                  - "ssm:*"
+                Resource: "*"
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-codebuild-${Env}
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs20
+        EnvironmentVariables:
+          - Name: ENV
+            Value: !Ref Env
+            Type: PLAINTEXT
+          - Name: DOCKER_PASSWORD
+            Value: !Ref DockerPassword
+            Type: PLAINTEXT
+          - Name: DOCKER_USERNAME
+            Value: !Ref DockerUsername
+            Type: PLAINTEXT
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref BuildSpec
+
+Outputs:
+  BuildConfig:
+    Description: Build Configuration
+    Value: !Ref CodeBuildProject
