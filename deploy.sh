@@ -123,7 +123,10 @@ sam package --output-template-file ./output.yaml \
     --s3-bucket "$BUCKET_NAME" \
     $PROFILE_FLAG \
     --region "$REGION" \
-    --template ./cloudformation/template.yaml
+    --template ./cloudformation/template.yaml || {
+  echo "Deployment failed due to a packaging error."
+  exit 1
+}
 
 STACK_NAME="tag-processor-stack-$ENV"
 
