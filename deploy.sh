@@ -132,6 +132,7 @@ STACK_NAME="tag-processor-stack-$ENV"
 
 sam deploy --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --no-confirm-changeset \
+    --no-fail-on-empty-changeset \
     --parameter-overrides ENV=dev \
     $PROFILE_FLAG \
     --region "$REGION" \
