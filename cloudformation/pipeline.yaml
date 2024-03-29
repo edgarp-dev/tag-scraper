@@ -74,6 +74,16 @@ Resources:
         BuildSpec: buildspecs/sanity-check.yaml
         WorkDir: tag-processor
 
+  DeployAwsResources:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      Parameters:
+        Env: !Ref Env
+        ProjectName: deploy-aws-resources
+        BuildSpec: buildspecs/deploy.yaml
+        WorkDir: /
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -99,7 +109,7 @@ Resources:
               OutputArtifacts:
                 - Name: SourceOutput
               RunOrder: 1
-        - Name: Build
+        - Name: Validation
           Actions:
             - Name: tag-notification-sender-sanity
               ActionTypeId:
@@ -134,6 +144,19 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
               RunOrder: 2
+        - Name: Deploy
+          Actions:
+            - Name: deploy-aws-resources
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !GetAtt DeployAwsResources.Outputs.BuildConfig
+              InputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 3
 
 Outputs:
   PipelineUrl:

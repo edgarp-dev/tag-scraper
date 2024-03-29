@@ -38,6 +38,16 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - 'cloudformation:*'
+                  - 's3:*'
+                  - 'lambda:*'
+                  - 'dynamodb:*'
+                  - 'sqs:*'
+                  - 'sns:*'
+                  - 'iam:PassRole'
+                Resource: '*'
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -53,6 +63,9 @@ Resources:
         EnvironmentVariables:
           - Name: WORK_DIR
             Value: !Ref WorkDir
+            Type: PLAINTEXT
+          - Name: ENV
+            Value: !Ref Env
             Type: PLAINTEXT
       Source:
         Type: CODEPIPELINE
