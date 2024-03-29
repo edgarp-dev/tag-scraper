@@ -134,7 +134,10 @@ sam deploy --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --region "$REGION" \
     --s3-bucket "$BUCKET_NAME" \
     --stack-name "$STACK_NAME" \
-    --template ./output.yaml
+    --template ./output.yaml || {
+  echo "Deployment failed due to a stack error."
+  exit 1
+}
 
 
 echo "Cleaning build files"

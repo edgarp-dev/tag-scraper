@@ -40,15 +40,15 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - 'cloudformation:*'
-                  - 's3:*'
-                  - 'lambda:*'
-                  - 'dynamodb:*'
-                  - 'sqs:*'
-                  - 'sns:*'
-                  - 'iam:PassRole'
-                  - 'ssm:*'
-                Resource: '*'
+                  - "cloudformation:*"
+                  - "s3:*"
+                  - "lambda:*"
+                  - "dynamodb:*"
+                  - "sqs:*"
+                  - "sns:*"
+                  - "iam:*"
+                  - "ssm:*"
+                Resource: "*"
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
