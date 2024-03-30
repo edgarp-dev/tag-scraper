@@ -22,7 +22,8 @@ type Sale = {
 };
 
 const cache = new NodeCache({ stdTTL: 604800 });
-const { IS_LOCAL_HOST } = process.env;
+const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV } = process.env;
+
 const VERSION = '0.0.3';
 
 function wait(seconds: number): Promise<void> {
@@ -153,8 +154,7 @@ async function scrapTags() {
 
             if (entries.length > 0) {
                 const sendMessageBatchInput: SendMessageBatchRequest = {
-                    QueueUrl:
-                        'https://sqs.us-east-1.amazonaws.com/975050027353/tag-queue-dev',
+                    QueueUrl: `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`,
                     Entries: entries
                 };
                 const sendMessageBatchCommand = new SendMessageBatchCommand(

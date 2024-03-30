@@ -1,0 +1,13 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Docker Hub...
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  build:
+    commands:
+      - echo Building the Docker image...
+      - cd ./web-scraper
+      - chmod +x ./deploy-to-docker-hub.sh
+      - ./deploy-to-docker-hub.sh
