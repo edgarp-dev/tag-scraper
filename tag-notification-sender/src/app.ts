@@ -11,7 +11,10 @@ export const lambdaHandler = async (event: SNSEvent): Promise<void> => {
             const { TELEGRAM_TOKEN, ENV } = process.env;
             const telegramApiUrl = 'https://api.telegram.org/bot';
             const token = TELEGRAM_TOKEN;
-            const channelId = `@promosalesbot_${ENV}`;
+            const isProdEnv = ENV === 'prod';
+            const channelId = isProdEnv
+                ? '@promodescuentoserrores'
+                : `@promosalesbot_${ENV}`;
             const url = `${telegramApiUrl}${token}/sendPhoto`;
 
             const { image, title, price, link } = message;
