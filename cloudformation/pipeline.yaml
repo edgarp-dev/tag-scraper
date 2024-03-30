@@ -14,12 +14,10 @@ Parameters:
   ArtifactsBucket:
     Type: String
 
-Resources:
-  ArtifactStoreBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub tag-processor-pipeline-artifacts-${Env}
+Conditions:
+  IsNotDev: !Not [!Equals [!Ref Env, "dev"]]
 
+Resources:
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -47,7 +45,7 @@ Resources:
   WebScraperSanity:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: web-scraper-sanity
@@ -57,7 +55,7 @@ Resources:
   TagNotificationSenderSanity:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: tag-notification-sender-sanity
@@ -67,7 +65,7 @@ Resources:
   TagProcessorSanity:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: tag-processor
@@ -77,7 +75,7 @@ Resources:
   DeployAwsResources:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: deploy-aws-resources
@@ -85,13 +83,14 @@ Resources:
 
   DeployToDockerHub:
     Type: AWS::CloudFormation::Stack
+    Condition: IsNotDev
     Properties:
-      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/docker-codebuild.yaml
+      TemplateURL: !Sub https://${ArtifactsBucket}.s3.amazonaws.com/cloudformation/docker-codebuild.yaml
       Parameters:
         Env: !Ref Env
         ProjectName: deploy-docker-hub
         BuildSpec: buildspecs/docker-hub-deploy.yaml
-        DockerPassword:  "{{resolve:ssm:/edgarpdev/dockerhub/info:1}}"
+        DockerPassword: "{{resolve:ssm:/edgarpdev/dockerhub/info:1}}"
         DockerUsername: edgarpdev
 
   Pipeline:
@@ -101,7 +100,7 @@ Resources:
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref ArtifactStoreBucket
+        Location: !Ref ArtifactsBucket
       Stages:
         - Name: Source
           Actions:
@@ -167,17 +166,20 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
               RunOrder: 3
-            - Name: deploy-docker-hub
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !GetAtt DeployToDockerHub.Outputs.BuildConfig
-              InputArtifacts:
-                - Name: SourceOutput
-              RunOrder: 4
+            - !If
+              - IsNotDev
+              - Name: deploy-docker-hub
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: 1
+                  Provider: CodeBuild
+                Configuration:
+                  ProjectName: !GetAtt DeployToDockerHub.Outputs.BuildConfig
+                InputArtifacts:
+                  - Name: SourceOutput
+                RunOrder: 4
+              - !Ref AWS::NoValue
 
 Outputs:
   PipelineUrl:

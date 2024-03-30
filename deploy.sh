@@ -103,7 +103,7 @@ cd ../..
 
 echo "Deploying to $ENV environment in region $REGION..."
 
-BUCKET_NAME="tag-processor-artifacts-$ENV"
+BUCKET_NAME="tag-processor-app-artifacts-$ENV"
 
 PROFILE_FLAG=""
 if [ "$PIPELINE_MODE" = false ]; then

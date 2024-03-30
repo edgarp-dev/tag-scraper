@@ -60,7 +60,7 @@ if [[ "$ENV" != "prod" && "$ENV" != "dev" ]]; then
     exit 1
 fi
 
-BUCKET_NAME="tag-processor-pipeline-$ENV"
+BUCKET_NAME="tag-processor-pipeline-artifacts-$ENV"
 if awsv2 s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
     echo "Bucket $BUCKET_NAME already exists."
 else
@@ -71,8 +71,7 @@ fi
 
 
 echo "Syncing pipeline artifacts"
-awsv2 s3 sync ./cloudformation s3://$BUCKET_NAME
-awsv2 s3 sync ./buildspecs s3://$BUCKET_NAME
+awsv2 s3 sync ./cloudformation s3://$BUCKET_NAME/cloudformation
 
 echo "Deploying pipeline"
 STACK_NAME="tag-processor-pipeline-$ENV"
