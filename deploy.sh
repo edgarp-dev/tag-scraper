@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
             show_help
             exit 0
             ;;
-        *) 
+        *)
             echo "Unknown option: $1"
             show_help
             exit 1
