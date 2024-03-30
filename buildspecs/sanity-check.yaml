@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd ./$WORK_DIR
+      - echo Installing source NPM dependencies...
+      - npm install
+  build:
+    commands:
+      - echo Running the sanity command...
+      - npm run sanity
