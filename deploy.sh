@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
             show_help
             exit 0
             ;;
-        *)
+        *) 
             echo "Unknown option: $1"
             show_help
             exit 1
@@ -133,7 +133,7 @@ STACK_NAME="tag-processor-stack-$ENV"
 sam deploy --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --no-confirm-changeset \
     --no-fail-on-empty-changeset \
-    --parameter-overrides ENV=dev \
+    --parameter-overrides ENV=$ENV \
     $PROFILE_FLAG \
     --region "$REGION" \
     --s3-bucket "$BUCKET_NAME" \
