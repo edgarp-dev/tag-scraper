@@ -2,146 +2,166 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-    ENV:
-        Description: Environment
-        Type: String
+  Env:
+    Description: Environment
+    Type: String
+  NotificationEmail:
+    Description: Email to send email notifications to
+    Type: String
 
 Conditions:
-  IsProdEnvironment: !Equals [ !Ref ENV, prod ]
+  IsProdEnvironment: !Equals [!Ref Env, prod]
 
 Resources:
-    TagQueue:
-        Type: AWS::SQS::Queue
-        Properties:
-            QueueName: !Sub tag-queue-${ENV}
-            VisibilityTimeout: 60
+  TagQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub tag-queue-${Env}
+      VisibilityTimeout: 60
 
-    TagProcessorDynamoDb:
-        Type: AWS::DynamoDB::Table
-        Properties:
-            TableName: !Sub tag-processor-db-${ENV}
-            AttributeDefinitions:
-                - AttributeName: id
-                  AttributeType: S
-                - AttributeName: title
-                  AttributeType: S
-            KeySchema:
-                - AttributeName: id
-                  KeyType: HASH
-            GlobalSecondaryIndexes:
-                - IndexName: TitleIndex
-                  KeySchema:
-                      - AttributeName: title
-                        KeyType: HASH
-                  Projection:
-                      ProjectionType: ALL
-            BillingMode: PAY_PER_REQUEST
+  TagProcessorDynamoDb:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub tag-processor-db-${Env}
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: title
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TitleIndex
+          KeySchema:
+            - AttributeName: title
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
 
-    TagNotificationTopic:
-        Type: AWS::SNS::Topic
-        Properties:
-            TopicName: !Sub tag-notification-topic-${ENV}
+  TagNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub tag-notification-topic-${Env}
 
-    TagProcessorLambda:
-        Type: AWS::Serverless::Function
-        Properties:
-            FunctionName: !Sub tag-processor-${ENV}
-            CodeUri: ../tag-processor/build
-            Handler: app.lambdaHandler
-            Runtime: nodejs20.x
-            Timeout: 60
-            Role: !GetAtt TagProcessorLambdaExecutionRole.Arn
-            Architectures:
-                - x86_64
-            Environment:
-                Variables:
-                    TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
-                    TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
-            Events:
-                TagQueueEvent:
-                    Type: SQS
-                    Properties:
-                        Queue: !GetAtt TagQueue.Arn
+  WebScrapperErrorTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub web-scrapper-error-topic-${Env}
 
-    TagProcessorLambdaExecutionRole:
-        Type: AWS::IAM::Role
-        Properties:
-            RoleName: !Sub tag-processor-lambda-role-${ENV}
-            AssumeRolePolicyDocument:
-                Version: "2012-10-17"
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service: lambda.amazonaws.com
-                      Action: sts:AssumeRole
-            Policies:
-                - PolicyName: CloudWatchAccessPolicy
-                  PolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                          - Effect: Allow
-                            Action:
-                                - logs:*
-                            Resource: "*"
-                          - Effect: Allow
-                            Action:
-                                - sqs:ChangeMessageVisibility
-                                - sqs:ChangeMessageVisibilityBatch
-                                - sqs:DeleteMessage
-                                - sqs:DeleteMessageBatch
-                                - sqs:GetQueueAttributes
-                                - sqs:ReceiveMessage
-                            Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tag-queue-${ENV}
-                          - Effect: Allow
-                            Action:
-                                - dynamodb:PutItem
-                                - dynamodb:Query
-                            Resource:
-                                - !GetAtt TagProcessorDynamoDb.Arn
-                                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tag-processor-db-${ENV}/index/*
-                          - Effect: Allow
-                            Action:
-                                - sns:Publish
-                            Resource: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:tag-notification-topic-${ENV}
+  WebScrapperErrorSNSTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref NotificationEmail
+      TopicArn: !Ref WebScrapperErrorTopic
 
-    TagNotificationSenderLambda:
-        Type: AWS::Serverless::Function
-        Properties:
-            FunctionName: !Sub tag-notification-sender-${ENV}
-            CodeUri: ../tag-notification-sender/build
-            Handler: app.lambdaHandler
-            Runtime: nodejs20.x
-            Timeout: 60
-            Role: !GetAtt TagNotificationSenderLambdaExecutionRole.Arn
-            Architectures:
-                - x86_64
-            Environment:
-                Variables:
-                    TELEGRAM_TOKEN: !If [ IsProdEnvironment, '{{resolve:ssm:/salesbot/prod/telegram:1}}', '{{resolve:ssm:/salesbot/dev/telegram:1}}' ]
-                    ENV: !Ref ENV
-            Events:
-                TagNotificationSNSTopic:
-                    Type: SNS
-                    Properties:
-                        Topic: !Ref TagNotificationTopic
+  TagProcessorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub tag-processor-${Env}
+      CodeUri: ../tag-processor/build
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Timeout: 60
+      Role: !GetAtt TagProcessorLambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
+          TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
+      Events:
+        TagQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TagQueue.Arn
 
-    TagNotificationSenderLambdaExecutionRole:
-        Type: AWS::IAM::Role
-        Properties:
-            RoleName: !Sub tag-notification-sender-lambda-role-${ENV}
-            AssumeRolePolicyDocument:
-                Version: "2012-10-17"
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                          Service: lambda.amazonaws.com
-                      Action: sts:AssumeRole
-            Policies:
-                - PolicyName: CloudWatchAccessPolicy
-                  PolicyDocument:
-                      Version: "2012-10-17"
-                      Statement:
-                          - Effect: Allow
-                            Action:
-                                - logs:*
-                            Resource: "*"
+  TagProcessorLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub tag-processor-lambda-role-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:ChangeMessageVisibilityBatch
+                  - sqs:DeleteMessage
+                  - sqs:DeleteMessageBatch
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:tag-queue-${Env}
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt TagProcessorDynamoDb.Arn
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/tag-processor-db-${Env}/index/*
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:tag-notification-topic-${Env}
+
+  TagNotificationSenderLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub tag-notification-sender-${Env}
+      CodeUri: ../tag-notification-sender/build
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Timeout: 60
+      Role: !GetAtt TagNotificationSenderLambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          TELEGRAM_TOKEN:
+            !If [
+              IsProdEnvironment,
+              "{{resolve:ssm:/salesbot/prod/telegram:1}}",
+              "{{resolve:ssm:/salesbot/dev/telegram:1}}",
+            ]
+          ENV: !Ref Env
+      Events:
+        TagNotificationSNSTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref TagNotificationTopic
+
+  TagNotificationSenderLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub tag-notification-sender-lambda-role-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"

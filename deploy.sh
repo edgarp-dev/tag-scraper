@@ -49,6 +49,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [ "$PIPELINE_MODE" = false ]; then
+    shopt -s expand_aliases
+    source ~/.bash_aliases
+fi
+
 
 if [ -z "$ENV" ]; then
     echo "Error: -e parameter is mandatory."
@@ -133,7 +138,7 @@ STACK_NAME="tag-processor-stack-$ENV"
 sam deploy --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
     --no-confirm-changeset \
     --no-fail-on-empty-changeset \
-    --parameter-overrides ENV=$ENV \
+    --parameter-overrides Env=$ENV NotificationEmail=edgarp.dev@gmail.com \
     $PROFILE_FLAG \
     --region "$REGION" \
     --s3-bucket "$BUCKET_NAME" \
