@@ -24,7 +24,7 @@ type Sale = {
 const cache = new NodeCache({ stdTTL: 604800 });
 const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV } = process.env;
 
-const VERSION = '0.0.3';
+const VERSION = '1.0.0';
 
 function wait(seconds: number): Promise<void> {
     return new Promise((resolve) => {
@@ -176,10 +176,7 @@ async function scrapTags() {
 
 if (!IS_LOCAL_HOST) {
     cron.schedule('*/1 * * * *', async () => {
-        // await scrapTags();
-        console.log(
-            'This is a test to see if watchtwer update my docker container :D'
-        );
+        await scrapTags();
     });
 } else {
     scrapTags();
