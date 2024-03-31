@@ -24,7 +24,7 @@ ${price}
 
 [COMPRAR](${link})`;
 
-            console.log('SENDING MESSAGE TO TELEGRAM');
+            console.log(`SENDING MESSAGE TO TELEGRAM CHANNEL: ${channelId}`);
             console.log(channelId, markdownMessage);
 
             const response = await axios.post(url, {

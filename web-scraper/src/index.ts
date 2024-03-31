@@ -7,6 +7,7 @@ import {
     SendMessageBatchCommand,
     SendMessageBatchRequest
 } from '@aws-sdk/client-sqs';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import NodeCache from 'node-cache';
 import cron from 'node-cron';
 
@@ -21,10 +22,11 @@ type Sale = {
     isExpired: boolean;
 };
 
-const cache = new NodeCache({ stdTTL: 604800 });
-const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV } = process.env;
-
-const VERSION = '1.0.0';
+const cache = new NodeCache({ stdTTL: 86400, checkperiod: 60 });
+const sqsClient = new SQSClient({ credentials: fromEnv() });
+const snsClient = new SNSClient({ credentials: fromEnv() });
+const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
+const VERSION = '1.1.0';
 
 function wait(seconds: number): Promise<void> {
     return new Promise((resolve) => {
@@ -110,7 +112,6 @@ async function scrapTags() {
 
             console.log('FILTERING ACTIVE SALES');
             const activeSales = sales.filter((bug) => !bug.isExpired);
-            const sqsClient = new SQSClient({ credentials: fromEnv() });
 
             const entries = [];
             for (const sale of activeSales) {
@@ -153,15 +154,16 @@ async function scrapTags() {
             }
 
             if (entries.length > 0) {
+                const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
                 const sendMessageBatchInput: SendMessageBatchRequest = {
-                    QueueUrl: `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`,
+                    QueueUrl: queueUrl,
                     Entries: entries
                 };
                 const sendMessageBatchCommand = new SendMessageBatchCommand(
                     sendMessageBatchInput
                 );
 
-                console.log('SENDING QUEUE MESSAGES');
+                console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
                 const response = await sqsClient.send(sendMessageBatchCommand);
                 console.log(response);
                 console.log(`${entries.length} MESSAGES PUBLISHED`);
@@ -169,8 +171,17 @@ async function scrapTags() {
                 console.log('NO MESSAGES SENT');
             }
         }
-    } catch (eror) {
-        console.log(eror);
+    } catch (error) {
+        console.log('ERROR, SENDING SNS NOTIFICATION TO EMAIL');
+        console.error(error);
+
+        const params = {
+            Message: `ERROR SCRAPPING PROMODESCUENTOS: ${(error as Error).message}`,
+            TopicArn: ERROR_SNS_TOPIC_ARN
+        };
+        await snsClient.send(new PublishCommand(params));
+
+        console.log('ERROR NOTIFICATION SENT TO EMAIL');
     }
 }
 
