@@ -22,7 +22,7 @@ type Sale = {
     isExpired: boolean;
 };
 
-const cache = new NodeCache({ stdTTL: 604800 });
+const cache = new NodeCache({ stdTTL: 86400, checkperiod: 60 });
 const sqsClient = new SQSClient({ credentials: fromEnv() });
 const snsClient = new SNSClient({ credentials: fromEnv() });
 const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
@@ -154,15 +154,16 @@ async function scrapTags() {
             }
 
             if (entries.length > 0) {
+                const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
                 const sendMessageBatchInput: SendMessageBatchRequest = {
-                    QueueUrl: `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`,
+                    QueueUrl: queueUrl,
                     Entries: entries
                 };
                 const sendMessageBatchCommand = new SendMessageBatchCommand(
                     sendMessageBatchInput
                 );
 
-                console.log('SENDING QUEUE MESSAGES');
+                console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
                 const response = await sqsClient.send(sendMessageBatchCommand);
                 console.log(response);
                 console.log(`${entries.length} MESSAGES PUBLISHED`);

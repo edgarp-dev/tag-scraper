@@ -138,7 +138,7 @@ Resources:
               "{{resolve:ssm:/salesbot/prod/telegram:1}}",
               "{{resolve:ssm:/salesbot/dev/telegram:1}}",
             ]
-          Env: !Ref Env
+          ENV: !Ref Env
       Events:
         TagNotificationSNSTopic:
           Type: SNS
