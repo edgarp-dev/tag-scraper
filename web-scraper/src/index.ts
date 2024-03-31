@@ -176,7 +176,10 @@ async function scrapTags() {
 
 if (!IS_LOCAL_HOST) {
     cron.schedule('*/1 * * * *', async () => {
-        await scrapTags();
+        // await scrapTags();
+        console.log(
+            'This is a test to see if watchtwer update my docker container :D'
+        );
     });
 } else {
     scrapTags();
