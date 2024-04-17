@@ -163,23 +163,24 @@ async function scrapTags() {
         for (const sale of activeSales) {
             console.log(sale);
         }
-        // if (entries.length > 0) {
-        //     const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
-        //     const sendMessageBatchInput: SendMessageBatchRequest = {
-        //         QueueUrl: queueUrl,
-        //         Entries: entries
-        //     };
-        //     const sendMessageBatchCommand = new SendMessageBatchCommand(
-        //         sendMessageBatchInput
-        //     );
 
-        //     console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
-        //     const response = await sqsClient.send(sendMessageBatchCommand);
-        //     console.log(response);
-        //     console.log(`${entries.length} MESSAGES PUBLISHED`);
-        // } else {
-        //     console.log('NO MESSAGES SENT');
-        // }
+        if (entries.length > 0) {
+            const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
+            const sendMessageBatchInput: SendMessageBatchRequest = {
+                QueueUrl: queueUrl,
+                Entries: entries
+            };
+            const sendMessageBatchCommand = new SendMessageBatchCommand(
+                sendMessageBatchInput
+            );
+
+            console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
+            const response = await sqsClient.send(sendMessageBatchCommand);
+            console.log(response);
+            console.log(`${entries.length} MESSAGES PUBLISHED`);
+        } else {
+            console.log('NO MESSAGES SENT');
+        }
     } catch (error) {
         console.log('ERROR, SENDING SNS NOTIFICATION TO EMAIL');
         console.error(error);
