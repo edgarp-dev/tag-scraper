@@ -21,7 +21,7 @@ jobs:
         run: cd ./web-scraper
 
       - name: Install dependencies
-        run: ls
+        run: npm install
 
-    # - name: Run Sanity command
-    #   run: npm run sanity
+      - name: Run Sanity command
+        run: npm run sanity
