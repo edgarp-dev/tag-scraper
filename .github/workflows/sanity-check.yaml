@@ -1,0 +1,36 @@
+name: Sanity Check
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - "*"
+
+jobs:
+  build:
+    name: Run Sanity Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: tag-notification-sender sanity
+        run: |
+          cd tag-notification-sender &&
+          npm install &&
+          npm run sanity
+
+      - name: tag-processor sanity
+        run: |
+          cd tag-processor &&
+          npm install &&
+          npm run sanity
+
+      - name: web-scraper sanity
+        run: |
+          cd web-scraper &&
+          npm install &&
+          npm run sanity
