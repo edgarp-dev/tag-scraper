@@ -22,6 +22,7 @@ type Sale = {
     isExpired: boolean;
 };
 
+const tags = ['bug', 'error', 'corran', 'preciazo'];
 const cache = new NodeCache({ stdTTL: 86400, checkperiod: 60 });
 const sqsClient = new SQSClient({ credentials: fromEnv() });
 const snsClient = new SNSClient({ credentials: fromEnv() });
@@ -50,127 +51,135 @@ async function scrapTags() {
         const browser = await puppeteer.launch(puppeteerConfig);
         const page = await browser.newPage();
 
-        console.log(
-            'OPENING URL: https://www.promodescuentos.com/search?q=bug'
-        );
-        await page.goto('https://www.promodescuentos.com/search?q=bug');
+        let sales: Sale[] = [];
 
-        console.log('DELAYING 3 SECONDS UNTIL ELEMENTS LOAD');
-        await wait(3);
+        for (const tag of tags) {
+            const tagUrl = `https://www.promodescuentos.com/search?q=${tag}`;
 
-        console.log('SCRAPING HTML ELEMENTS');
-        const containerElement = await page.$('.js-threadList');
+            console.log(`OPENING URL: ${tagUrl}`);
+            await page.goto(tagUrl);
 
-        if (containerElement) {
-            const sales: Sale[] = await containerElement.$$eval(
-                'article',
-                (articles) => {
-                    return articles.map((article) => {
-                        const threadLinkElement = article.querySelector(
-                            '.thread-title .thread-link'
-                        );
+            console.log('DELAYING 3 SECONDS UNTIL ELEMENTS LOAD');
+            await wait(3);
 
-                        const priceElement = article.querySelector(
-                            '.overflow--fade .threadItemCard-price'
-                        );
-                        const price = priceElement
-                            ? priceElement.textContent.trim()
-                            : null;
+            console.log('SCRAPING HTML ELEMENTS');
+            const containerElement = await page.$('.js-threadList');
 
-                        const imgElement = article.querySelector(
-                            '.threadGrid-image img'
-                        );
-                        const image = imgElement
-                            ? imgElement.getAttribute('src')
-                            : null;
+            if (containerElement) {
+                const tagSales = (await containerElement.$$eval(
+                    'article',
+                    (articles) => {
+                        return articles.map((article) => {
+                            const threadLinkElement = article.querySelector(
+                                '.thread-title .thread-link'
+                            );
 
-                        const anchorElement =
-                            article.querySelector('.thread-title a');
-                        const link = anchorElement
-                            ? anchorElement.getAttribute('href')
-                            : null;
+                            const priceElement = article.querySelector(
+                                '.overflow--fade .threadItemCard-price'
+                            );
+                            const price = priceElement
+                                ? priceElement.textContent.trim()
+                                : null;
 
-                        const isExpired = article
-                            .querySelector(
-                                '.threadGrid-headerMeta .size--all-s'
-                            )
-                            .textContent.trim();
+                            const imgElement = article.querySelector(
+                                '.threadGrid-image img'
+                            );
+                            const image = imgElement
+                                ? imgElement.getAttribute('src')
+                                : null;
 
-                        return {
-                            articleId: article.id,
-                            title: threadLinkElement.textContent,
-                            price,
-                            image,
-                            link,
-                            isExpired: isExpired === 'Expirado'
-                        };
-                    });
-                }
-            );
+                            const anchorElement =
+                                article.querySelector('.thread-title a');
+                            const link = anchorElement
+                                ? anchorElement.getAttribute('href')
+                                : null;
 
-            await browser.close();
+                            const isExpired = article
+                                .querySelector(
+                                    '.threadGrid-headerMeta .size--all-s'
+                                )
+                                .textContent.trim();
 
-            console.log('FILTERING ACTIVE SALES');
-            const activeSales = sales.filter((bug) => !bug.isExpired);
+                            return {
+                                articleId: article.id,
+                                title: threadLinkElement.textContent,
+                                price,
+                                image,
+                                link,
+                                isExpired: isExpired === 'Expirado'
+                            };
+                        });
+                    }
+                )) as Sale[];
 
-            const entries = [];
-            for (const sale of activeSales) {
-                const { articleId, title, price, image, link } = sale;
-
-                const itemInCache = cache.get(articleId);
-
-                if (!itemInCache) {
-                    entries.push({
-                        Id: uuidv4(),
-                        MessageBody: title,
-                        MessageAttributes: {
-                            articleId: {
-                                DataType: 'String',
-                                StringValue: articleId
-                            },
-                            title: {
-                                DataType: 'String',
-                                StringValue: title ?? ''
-                            },
-                            price: {
-                                DataType: 'String',
-                                StringValue: price ?? ''
-                            },
-                            image: {
-                                DataType: 'String',
-                                StringValue: image ?? ''
-                            },
-                            link: {
-                                DataType: 'String',
-                                StringValue: link ?? ''
-                            }
-                        }
-                    });
-
-                    cache.set(articleId, articleId);
-                } else {
-                    console.log(`${articleId} in cache`);
-                }
-            }
-
-            if (entries.length > 0) {
-                const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
-                const sendMessageBatchInput: SendMessageBatchRequest = {
-                    QueueUrl: queueUrl,
-                    Entries: entries
-                };
-                const sendMessageBatchCommand = new SendMessageBatchCommand(
-                    sendMessageBatchInput
-                );
-
-                console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
-                const response = await sqsClient.send(sendMessageBatchCommand);
-                console.log(response);
-                console.log(`${entries.length} MESSAGES PUBLISHED`);
-            } else {
-                console.log('NO MESSAGES SENT');
+                sales = sales.concat(tagSales);
             }
         }
+
+        await browser.close();
+
+        console.log('FILTERING ACTIVE SALES');
+        const activeSales = sales.filter((bug) => !bug.isExpired);
+
+        const entries = [];
+        for (const sale of activeSales) {
+            const { articleId, title, price, image, link } = sale;
+
+            const itemInCache = cache.get(articleId);
+
+            if (!itemInCache) {
+                entries.push({
+                    Id: uuidv4(),
+                    MessageBody: title,
+                    MessageAttributes: {
+                        articleId: {
+                            DataType: 'String',
+                            StringValue: articleId
+                        },
+                        title: {
+                            DataType: 'String',
+                            StringValue: title ?? ''
+                        },
+                        price: {
+                            DataType: 'String',
+                            StringValue: price ?? ''
+                        },
+                        image: {
+                            DataType: 'String',
+                            StringValue: image ?? ''
+                        },
+                        link: {
+                            DataType: 'String',
+                            StringValue: link ?? ''
+                        }
+                    }
+                });
+
+                cache.set(articleId, articleId);
+            } else {
+                console.log(`${articleId} in cache`);
+            }
+        }
+        for (const sale of activeSales) {
+            console.log(sale);
+        }
+        // if (entries.length > 0) {
+        //     const queueUrl = `https://sqs.us-east-1.amazonaws.com/${AWS_ACCOUNT_ID}/tag-queue-${ENV}`;
+        //     const sendMessageBatchInput: SendMessageBatchRequest = {
+        //         QueueUrl: queueUrl,
+        //         Entries: entries
+        //     };
+        //     const sendMessageBatchCommand = new SendMessageBatchCommand(
+        //         sendMessageBatchInput
+        //     );
+
+        //     console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${queueUrl}`);
+        //     const response = await sqsClient.send(sendMessageBatchCommand);
+        //     console.log(response);
+        //     console.log(`${entries.length} MESSAGES PUBLISHED`);
+        // } else {
+        //     console.log('NO MESSAGES SENT');
+        // }
     } catch (error) {
         console.log('ERROR, SENDING SNS NOTIFICATION TO EMAIL');
         console.error(error);
