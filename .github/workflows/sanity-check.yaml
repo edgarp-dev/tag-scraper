@@ -17,11 +17,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Navigate to web-scraper directory
-        run: cd web-scraper
-
-      - name: Install dependencies
-        run: ls
-
-      - name: Run Sanity command
-        run: npm run sanity
+      - name: Navigate to web-scraper directory and run commands
+        run: |
+          cd web-scraper &&
+          npm install &&
+          npm run sanity
