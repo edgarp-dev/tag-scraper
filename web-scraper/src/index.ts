@@ -9,7 +9,7 @@ import {
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import NodeCache from 'node-cache';
 import cron from 'node-cron';
-import { NodeCacheAdapter, PuppeterAdapter } from './adapters';
+import { NodeCacheAdapter, PuppeterAdapter, QueueAdapter } from './adapters';
 import { SalesProcessor } from './core';
 
 dotenv.config();
@@ -18,18 +18,25 @@ const cache = new NodeCache({ stdTTL: 86400, checkperiod: 60 });
 const sqsClient = new SQSClient({ credentials: fromEnv() });
 const snsClient = new SNSClient({ credentials: fromEnv() });
 const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
-const VERSION = '1.1.1';
+const VERSION = '1.2.0';
 
 const puppeterAdapter = new PuppeterAdapter();
 const nodeCacheAdapter = new NodeCacheAdapter();
-const salesProcessor = new SalesProcessor(puppeterAdapter, nodeCacheAdapter);
+const queueAdatpter = new QueueAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
+const salesProcessor = new SalesProcessor(
+    puppeterAdapter,
+    nodeCacheAdapter,
+    queueAdatpter
+);
 
 async function scrapTags() {
     try {
         console.log(`VERSION: ${VERSION}`);
 
         const isLocalHost = IS_LOCAL_HOST === 'dev';
-        await salesProcessor.processSales(isLocalHost);
+        const sales = await salesProcessor.processSales(isLocalHost);
+        // console.log(sales);
+        await salesProcessor.sendQueueBatchMessages(sales);
 
         //     console.log('FILTERING ACTIVE SALES');
         //     const activeSales = tagValues.filter((bug) => !bug.isExpired);

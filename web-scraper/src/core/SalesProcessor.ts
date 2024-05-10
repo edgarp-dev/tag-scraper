@@ -1,4 +1,4 @@
-import { CacheService, ScraperService } from '../ports';
+import { CacheService, QueueService, ScraperService } from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
 import { Sale } from './types';
 
@@ -9,12 +9,19 @@ export default class SalesProcessor {
 
     private readonly cacheService: CacheService;
 
-    constructor(scraperService: ScraperService, cacheService: CacheService) {
+    private readonly queueService: QueueService;
+
+    constructor(
+        scraperService: ScraperService,
+        cacheService: CacheService,
+        queueService: QueueService
+    ) {
         this.scraperService = scraperService;
         this.cacheService = cacheService;
+        this.queueService = queueService;
     }
 
-    public async processSales(isLocalHost: boolean): Promise<void> {
+    public async processSales(isLocalHost: boolean): Promise<Sale[]> {
         let sales: Sale[] = [];
         for (const tag of this.tags) {
             const url = `https://www.promodescuentos.com/search?q=${tag}`;
@@ -25,9 +32,8 @@ export default class SalesProcessor {
 
             sales = sales.concat(this.parseScrapedContent(scrapedContent));
         }
-
-        const activeSales = this.getActiveSales(sales);
-        console.log(activeSales);
+        // console.log(sales);
+        return this.getActiveSales(sales);
     }
 
     private parseScrapedContent(scrapedContent: ScrapedContent[]): Sale[] {
@@ -47,19 +53,19 @@ export default class SalesProcessor {
 
     private getActiveSales(sales: Sale[]): Sale[] {
         const activeSales = sales.filter((sale) => !sale.isExpired);
-        activeSales.forEach(({ articleId }: Sale) =>
-            console.log(`CACHE: ${this.cacheService.get(articleId)}`)
-        );
         const salesNotInCache = activeSales.filter(
             ({ articleId }: Sale) => !this.cacheService.get(articleId)
         );
 
         for (const saleNotCached of salesNotInCache) {
             const { articleId } = saleNotCached;
-            console.log(`Saving to cache ${articleId}`);
             this.cacheService.set(articleId);
         }
 
         return salesNotInCache;
+    }
+
+    public async sendQueueBatchMessages(sales: Sale[]): Promise<void> {
+        await this.queueService.sendBatchMessages(sales);
     }
 }

@@ -1,6 +1,9 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { ScraperService } from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
+
+puppeteer.use(StealthPlugin());
 
 export default class PuppeterAdapter implements ScraperService {
     private wait(seconds: number): Promise<void> {
@@ -20,19 +23,22 @@ export default class PuppeterAdapter implements ScraperService {
             executablePath: isLocalHost ? '/usr/bin/google-chrome' : undefined
         });
         const page = await browser.newPage();
+        await page.setUserAgent(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        );
 
         let scrapedContent: ScrapedContent[] = [];
 
         console.log(`OPENING URL: ${url}`);
         await page.goto(url);
 
-        console.log('DELAYING 3 SECONDS UNTIL ELEMENTS LOAD');
-        await this.wait(3);
+        // TODO add promise race condition to exit promise after timeout
 
         console.log('SCRAPING HTML ELEMENTS');
+        await page.waitForSelector('.js-threadList');
         const containerElement = await page.$('.js-threadList');
-
         if (containerElement) {
+            console.log('ENTER CONTAINER ELEMENT');
             const tagSales = await containerElement.$$eval(
                 'article',
                 (articles) => {
@@ -78,7 +84,6 @@ export default class PuppeterAdapter implements ScraperService {
                     });
                 }
             );
-
             scrapedContent = scrapedContent.concat(tagSales);
         }
 
