@@ -9,7 +9,7 @@ import { fromEnv } from '@aws-sdk/credential-providers';
 import { Sale } from '../core/types';
 import { QueueService } from '../ports';
 
-export default class QueueAdapter implements QueueService {
+export default class SqsAdapter implements QueueService {
     private readonly queueUrl: string;
 
     private readonly sqsClient: SQSClient;

@@ -1,5 +1,5 @@
 import PuppeterAdapter from './PuppeterAdapter';
 import NodeCacheAdapter from './NodeCacheAdapter';
-import QueueAdapter from './QueueAdapter';
+import SqsAdapter from './SqsAdapter';
 
-export { PuppeterAdapter, NodeCacheAdapter, QueueAdapter };
+export { PuppeterAdapter, NodeCacheAdapter, SqsAdapter };

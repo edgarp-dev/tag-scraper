@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import { NodeCacheAdapter, PuppeterAdapter, QueueAdapter } from './adapters';
+import { NodeCacheAdapter, PuppeterAdapter, SqsAdapter } from './adapters';
 import { SalesProcessor } from './core';
 import SnsAdapter from './adapters/SnsAdapter';
 
@@ -11,12 +11,12 @@ const VERSION = '1.2.0';
 
 const puppeterAdapter = new PuppeterAdapter();
 const nodeCacheAdapter = new NodeCacheAdapter();
-const queueAdatpter = new QueueAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
+const sqsAdapter = new SqsAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
 const notificationAdapter = new SnsAdapter(<string>ERROR_SNS_TOPIC_ARN);
 const salesProcessor = new SalesProcessor(
     puppeterAdapter,
     nodeCacheAdapter,
-    queueAdatpter,
+    sqsAdapter,
     notificationAdapter
 );
 
