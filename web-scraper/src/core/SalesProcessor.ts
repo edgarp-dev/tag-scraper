@@ -1,4 +1,9 @@
-import { CacheService, QueueService, ScraperService } from '../ports';
+import {
+    CacheService,
+    NotificationService,
+    QueueService,
+    ScraperService
+} from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
 import { Sale } from './types';
 
@@ -11,28 +16,41 @@ export default class SalesProcessor {
 
     private readonly queueService: QueueService;
 
+    private readonly notificationService: NotificationService;
+
     constructor(
         scraperService: ScraperService,
         cacheService: CacheService,
-        queueService: QueueService
+        queueService: QueueService,
+        notificationService: NotificationService
     ) {
         this.scraperService = scraperService;
         this.cacheService = cacheService;
         this.queueService = queueService;
+        this.notificationService = notificationService;
     }
 
     public async processSales(isLocalHost: boolean): Promise<Sale[]> {
         let sales: Sale[] = [];
-        for (const tag of this.tags) {
-            const url = `https://www.promodescuentos.com/search?q=${tag}`;
-            const scrapedContent = await this.scraperService.scrapPage(
-                isLocalHost,
-                url
-            );
 
-            sales = sales.concat(this.parseScrapedContent(scrapedContent));
+        try {
+            for (const tag of this.tags) {
+                const url = `https://www.promodescuentos.com/search?q=${tag}`;
+                const scrapedContent = await this.scraperService.scrapPage(
+                    isLocalHost,
+                    url
+                );
+
+                sales = sales.concat(this.parseScrapedContent(scrapedContent));
+            }
+        } catch (error: unknown) {
+            console.error(error);
+
+            await this.notificationService.notifyError(
+                (error as Error).message
+            );
         }
-        // console.log(sales);
+
         return this.getActiveSales(sales);
     }
 
@@ -66,6 +84,14 @@ export default class SalesProcessor {
     }
 
     public async sendQueueBatchMessages(sales: Sale[]): Promise<void> {
-        await this.queueService.sendBatchMessages(sales);
+        try {
+            await this.queueService.sendBatchMessages(sales);
+        } catch (error: unknown) {
+            console.error(error);
+
+            await this.notificationService.notifyError(
+                (error as Error).message
+            );
+        }
     }
 }

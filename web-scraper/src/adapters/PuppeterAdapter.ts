@@ -17,11 +17,13 @@ export default class PuppeterAdapter implements ScraperService {
         url: string
     ): Promise<ScrapedContent[]> {
         console.log('Opening page');
+
         const browser = await puppeteer.launch({
             headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
             executablePath: isLocalHost ? '/usr/bin/google-chrome' : undefined
         });
+
         const page = await browser.newPage();
         await page.setUserAgent(
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -32,13 +34,15 @@ export default class PuppeterAdapter implements ScraperService {
         console.log(`OPENING URL: ${url}`);
         await page.goto(url);
 
-        // TODO add promise race condition to exit promise after timeout
-
         console.log('SCRAPING HTML ELEMENTS');
-        await page.waitForSelector('.js-threadList');
+
+        await Promise.race([
+            page.waitForSelector('.js-threadList'),
+            this.timeOut()
+        ]);
+
         const containerElement = await page.$('.js-threadList');
         if (containerElement) {
-            console.log('ENTER CONTAINER ELEMENT');
             const tagSales = await containerElement.$$eval(
                 'article',
                 (articles) => {
@@ -90,5 +94,20 @@ export default class PuppeterAdapter implements ScraperService {
         await browser.close();
 
         return scrapedContent;
+    }
+
+    private timeOut(): Promise<void> {
+        const timeoutInMilliseconds = 10000;
+        return new Promise((_resolve, reject) => {
+            setTimeout(
+                () =>
+                    reject(
+                        new Error(
+                            `Timeout reached after ${timeoutInMilliseconds} milliseconds`
+                        )
+                    ),
+                timeoutInMilliseconds
+            );
+        });
     }
 }
