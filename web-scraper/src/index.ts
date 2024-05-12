@@ -6,9 +6,9 @@ import SnsAdapter from './adapters/SnsAdapter';
 
 dotenv.config();
 
-const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 
+const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
 const puppeterAdapter = new PuppeterAdapter();
 const nodeCacheAdapter = new NodeCacheAdapter();
 const sqsAdapter = new SqsAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
@@ -17,18 +17,20 @@ const salesProcessor = new SalesProcessor(
     puppeterAdapter,
     nodeCacheAdapter,
     sqsAdapter,
-    notificationAdapter
+    notificationAdapter,
+    <string>ENV
 );
+
+const isLocalHost = IS_LOCAL_HOST === 'true';
 
 async function scrapTags() {
     console.log(`VERSION: ${VERSION}`);
 
-    const isLocalHost = IS_LOCAL_HOST === 'dev';
     const sales = await salesProcessor.processSales(isLocalHost);
     await salesProcessor.sendQueueBatchMessages(sales);
 }
 
-if (!IS_LOCAL_HOST) {
+if (!isLocalHost) {
     cron.schedule('*/1 * * * *', async () => {
         await scrapTags();
     });

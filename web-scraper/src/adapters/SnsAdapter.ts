@@ -11,10 +11,10 @@ export default class SnsAdapter implements NotificationService {
         this.errorTopicSnsArn = errorTopicSnsArn;
     }
 
-    public async notifyError(message: string): Promise<void> {
+    public async notifyError(message: string, env: string): Promise<void> {
         console.log('ERROR, SENDING SNS NOTIFICATION TO EMAIL');
         const params = {
-            Message: `ERROR SCRAPPING PROMODESCUENTOS: ${message}`,
+            Message: `[${env.toUpperCase()}] ERROR SCRAPPING PROMODESCUENTOS: ${message}`,
             TopicArn: this.errorTopicSnsArn
         };
         await this.snsClient.send(new PublishCommand(params));
