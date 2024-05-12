@@ -6,7 +6,7 @@ import SnsAdapter from './adapters/SnsAdapter';
 
 dotenv.config();
 
-const VERSION = '1.2.1';
+const VERSION = '1.2.2';
 
 const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
 const puppeterAdapter = new PuppeterAdapter();
