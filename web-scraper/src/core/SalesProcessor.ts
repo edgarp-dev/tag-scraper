@@ -18,16 +18,20 @@ export default class SalesProcessor {
 
     private readonly notificationService: NotificationService;
 
+    private readonly env: string;
+
     constructor(
         scraperService: ScraperService,
         cacheService: CacheService,
         queueService: QueueService,
-        notificationService: NotificationService
+        notificationService: NotificationService,
+        env: string
     ) {
         this.scraperService = scraperService;
         this.cacheService = cacheService;
         this.queueService = queueService;
         this.notificationService = notificationService;
+        this.env = env;
     }
 
     public async processSales(isLocalHost: boolean): Promise<Sale[]> {
@@ -47,7 +51,8 @@ export default class SalesProcessor {
             console.error(error);
 
             await this.notificationService.notifyError(
-                (error as Error).message
+                (error as Error).message,
+                this.env
             );
         }
 
@@ -90,7 +95,8 @@ export default class SalesProcessor {
             console.error(error);
 
             await this.notificationService.notifyError(
-                (error as Error).message
+                (error as Error).message,
+                this.env
             );
         }
     }

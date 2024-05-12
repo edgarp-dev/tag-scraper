@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer-extra';
+import { PuppeteerLaunchOptions } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { ScraperService } from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
@@ -16,13 +17,16 @@ export default class PuppeterAdapter implements ScraperService {
         isLocalHost: boolean,
         url: string
     ): Promise<ScrapedContent[]> {
-        console.log('Opening page');
-
-        const browser = await puppeteer.launch({
+        const launchConfig: PuppeteerLaunchOptions = {
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            executablePath: isLocalHost ? '/usr/bin/google-chrome' : undefined
-        });
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        };
+
+        if (!isLocalHost) {
+            launchConfig['executablePath'] = '/usr/bin/google-chrome';
+        }
+
+        const browser = await puppeteer.launch(launchConfig);
 
         const page = await browser.newPage();
         await page.setUserAgent(
@@ -43,6 +47,7 @@ export default class PuppeterAdapter implements ScraperService {
 
         const containerElement = await page.$('.js-threadList');
         if (containerElement) {
+            console.log('PROCESSING SCRAPED ELEMENTS');
             const tagSales = await containerElement.$$eval(
                 'article',
                 (articles) => {

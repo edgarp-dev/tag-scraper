@@ -1,3 +1,3 @@
 export default interface NotificationService {
-    notifyError(message: string): Promise<void>;
+    notifyError(message: string, env: string): Promise<void>;
 }
