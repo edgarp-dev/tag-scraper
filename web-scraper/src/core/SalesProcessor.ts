@@ -34,7 +34,10 @@ export default class SalesProcessor {
         this.env = env;
     }
 
-    public async processSales(isLocalHost: boolean): Promise<Sale[]> {
+    public async processSales(
+        isLocalHost: boolean,
+        forceSendNotitfication: boolean
+    ): Promise<Sale[]> {
         let sales: Sale[] = [];
 
         try {
@@ -56,7 +59,7 @@ export default class SalesProcessor {
             );
         }
 
-        return this.getActiveSales(sales);
+        return this.getActiveSales(sales, forceSendNotitfication);
     }
 
     private parseScrapedContent(scrapedContent: ScrapedContent[]): Sale[] {
@@ -74,8 +77,13 @@ export default class SalesProcessor {
         });
     }
 
-    private getActiveSales(sales: Sale[]): Sale[] {
-        const activeSales = sales.filter((sale) => !sale.isExpired);
+    private getActiveSales(
+        sales: Sale[],
+        forceSendNotitfication: boolean
+    ): Sale[] {
+        const activeSales = forceSendNotitfication
+            ? sales
+            : sales.filter((sale) => !sale.isExpired);
         const salesNotInCache = activeSales.filter(
             ({ articleId }: Sale) => !this.cacheService.get(articleId)
         );

@@ -8,7 +8,13 @@ dotenv.config();
 
 const VERSION = '1.2.3';
 
-const { IS_LOCAL_HOST, AWS_ACCOUNT_ID, ENV, ERROR_SNS_TOPIC_ARN } = process.env;
+const {
+    IS_LOCAL_HOST,
+    AWS_ACCOUNT_ID,
+    ENV,
+    ERROR_SNS_TOPIC_ARN,
+    FORCE_SEND_NOTIFICATION
+} = process.env;
 const puppeterAdapter = new PuppeterAdapter();
 const nodeCacheAdapter = new NodeCacheAdapter();
 const sqsAdapter = new SqsAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
@@ -22,11 +28,15 @@ const salesProcessor = new SalesProcessor(
 );
 
 const isLocalHost = IS_LOCAL_HOST === 'true';
+const forceSendNotitfication = FORCE_SEND_NOTIFICATION === 'true';
 
 async function scrapTags() {
     console.log(`VERSION: ${VERSION}`);
 
-    const sales = await salesProcessor.processSales(isLocalHost);
+    const sales = await salesProcessor.processSales(
+        isLocalHost,
+        forceSendNotitfication
+    );
     await salesProcessor.sendQueueBatchMessages(sales);
 }
 

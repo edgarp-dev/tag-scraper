@@ -36,7 +36,7 @@
         "dotenv": "^16.4.3",
         "node-cache": "^5.1.2",
         "node-cron": "^3.0.3",
-        "puppeteer": "^21.9.0",
+        "puppeteer": "^22.14.0",
         "puppeteer-extra": "^3.3.6",
         "puppeteer-extra-plugin-stealth": "^2.11.2",
         "rimraf": "^5.0.5",

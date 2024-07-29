@@ -22,18 +22,25 @@ export default class SqsAdapter implements QueueService {
         const queueMessageEntries = this.createQueueMessageEntries(sales);
 
         if (queueMessageEntries.length > 0) {
-            const sendMessageBatchInput: SendMessageBatchRequest = {
-                QueueUrl: this.queueUrl,
-                Entries: queueMessageEntries
-            };
-            const sendMessageBatchCommand = new SendMessageBatchCommand(
-                sendMessageBatchInput
-            );
-
             console.log(`SENDING QUEUE MESSAGES TO QUEUE: ${this.queueUrl}`);
-            const response = await this.sqsClient.send(sendMessageBatchCommand);
-            console.log(response);
-            console.log(`${queueMessageEntries.length} MESSAGES PUBLISHED`);
+
+            for (let i = 0; i < queueMessageEntries.length; i += 10) {
+                const batch = queueMessageEntries.slice(i, i + 10);
+
+                const sendMessageBatchInput: SendMessageBatchRequest = {
+                    QueueUrl: this.queueUrl,
+                    Entries: batch
+                };
+                const sendMessageBatchCommand = new SendMessageBatchCommand(
+                    sendMessageBatchInput
+                );
+
+                const response = await this.sqsClient.send(
+                    sendMessageBatchCommand
+                );
+                console.log(response);
+                console.log(`${batch.length} MESSAGES PUBLISHED`);
+            }
         } else {
             console.log('NO MESSAGES SENT');
         }

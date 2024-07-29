@@ -18,7 +18,7 @@ export default class PuppeterAdapter implements ScraperService {
         url: string
     ): Promise<ScrapedContent[]> {
         const launchConfig: PuppeteerLaunchOptions = {
-            headless: 'new',
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         };
 

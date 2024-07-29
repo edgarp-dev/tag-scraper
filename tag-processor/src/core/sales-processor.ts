@@ -18,15 +18,19 @@ export default class SalesProcessor {
         this.notificationService = notificationService;
     }
 
-    public async processSales(): Promise<void> {
+    public async processSales(forceSendNotitication = false): Promise<void> {
         const salesMessages = this.queueService.getSalesMessages();
 
         for (const saleMessage of salesMessages) {
             const { title, image, price, link } = saleMessage;
             const saleFromDb = await this.dbRepository.get(title);
 
-            if (!saleFromDb) {
-                console.log('ITEM NOT PROCESSED, SAVING TO DB');
+            if (!saleFromDb || forceSendNotitication) {
+                console.log(
+                    forceSendNotitication
+                        ? 'FORCE SEND NOTITICATION MODE ENABLED'
+                        : 'ITEM NOT PROCESSED, SAVING TO DB'
+                );
                 const sale = {
                     id: uuid(),
                     title: title,
