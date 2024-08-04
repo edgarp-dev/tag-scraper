@@ -29,12 +29,14 @@ export default class DynamoDbAdapter implements DbRepository {
     public async get(
         key: string
     ): Promise<Record<string, unknown> | undefined> {
-        const params = {
+        const getItemParams = {
             TableName: this.tableName,
             Key: marshall({ id: key })
         };
 
-        const response = await this.dbClient.send(new GetItemCommand(params));
+        const response = await this.dbClient.send(
+            new GetItemCommand(getItemParams)
+        );
         if (response.Item) {
             return unmarshall(response.Item);
         }
