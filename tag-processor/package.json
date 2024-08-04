@@ -8,8 +8,8 @@
     "license": "MIT",
     "scripts": {
         "compile": "tsc",
-        "lint": "eslint . --ext .ts",
-        "lint:fix": "eslint . --ext .ts --fix",
+        "lint": "eslint '**/*.{ts,tsx}'",
+        "lint:fix": "eslint '**/*.{ts,tsx}' --fix",
         "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
         "sanity": "tsc --noEmit && npm run lint"
     },
