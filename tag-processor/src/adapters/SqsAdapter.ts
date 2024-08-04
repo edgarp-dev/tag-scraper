@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda';
 import { QueueService } from '../ports';
-import Sale from '../core/Sale';
+import SaleMessage from '../core/SaleMessage';
 
 export default class SqsAdapter implements QueueService {
     private readonly event: SQSEvent;
@@ -9,11 +9,13 @@ export default class SqsAdapter implements QueueService {
         this.event = event;
     }
 
-    public getSalesMessages(): Sale[] {
+    public getSalesMessages(): SaleMessage[] {
         return this.event.Records.map((record) => {
-            const { image, price, link, title } = record.messageAttributes;
+            const { threadId, image, price, link, title } =
+                record.messageAttributes;
 
-            const sale = new Sale();
+            const sale = new SaleMessage();
+            sale.threadId = threadId.stringValue ?? '';
             sale.image = image.stringValue ?? '';
             sale.price = price.stringValue ?? '';
             sale.link = link.stringValue ?? '';
