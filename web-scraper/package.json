@@ -4,6 +4,7 @@
     "description": "",
     "main": "index.ts",
     "scripts": {
+        "debug": "npx ts-node ./src/index.ts",
         "dev": "npx nodemon",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",

@@ -7,12 +7,6 @@ import { ScrapedContent } from '../ports/ScraperService';
 puppeteer.use(StealthPlugin());
 
 export default class PuppeterAdapter implements ScraperService {
-    private wait(seconds: number): Promise<void> {
-        return new Promise((resolve) => {
-            setTimeout(resolve, seconds * 1000);
-        });
-    }
-
     public async scrapPage(
         isLocalHost: boolean,
         url: string
@@ -61,20 +55,14 @@ export default class PuppeterAdapter implements ScraperService {
                         );
                         const price = priceElement
                             ? priceElement.textContent.trim()
-                            : null;
+                            : '$0';
 
                         const imgElement = article.querySelector(
                             '.threadGrid-image img'
                         );
                         const image = imgElement
                             ? imgElement.getAttribute('src')
-                            : null;
-
-                        const anchorElement =
-                            article.querySelector('.thread-title a');
-                        const link = anchorElement
-                            ? anchorElement.getAttribute('href')
-                            : null;
+                            : '';
 
                         const isExpired = article
                             .querySelector(
@@ -83,11 +71,10 @@ export default class PuppeterAdapter implements ScraperService {
                             .textContent.trim();
 
                         return {
-                            articleId: article.id,
+                            articleId: article.id.replace('thread_', ''),
                             title: threadLinkElement.textContent,
                             price,
                             image,
-                            link,
                             isExpired: isExpired === 'Expirado'
                         };
                     });
@@ -98,7 +85,30 @@ export default class PuppeterAdapter implements ScraperService {
 
         await browser.close();
 
-        return scrapedContent;
+        const scrapperContentWithLinks = scrapedContent.map((item) => {
+            const { title, articleId } = item;
+            const link = `https://www.promodescuentos.com/ofertas/${this.removeWhiteSpacesAndEspecialCharacters(title)}-${articleId}`;
+
+            return {
+                ...item,
+                link
+            };
+        });
+
+        return scrapperContentWithLinks;
+    }
+
+    private removeWhiteSpacesAndEspecialCharacters(text: string): string {
+        let result = text.replace(/ /g, '-');
+        result = result.replace(/[^\w-]/g, '');
+
+        return result.toLowerCase();
+    }
+
+    private wait(seconds: number): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(resolve, seconds * 1000);
+        });
     }
 
     private timeOut(): Promise<void> {
