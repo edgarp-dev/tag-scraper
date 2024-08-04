@@ -1,5 +1,5 @@
 export type Sale = {
-    articleId: string;
+    threadId: string;
     title: string;
     price: string;
     image: string;

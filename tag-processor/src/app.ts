@@ -4,7 +4,11 @@ import SalesProcessor from './core/sales-processor';
 
 export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
     try {
-        const { TAG_PROCESSOR_DB, TAG_NOTIFICATION_TOPIC } = process.env;
+        const {
+            TAG_PROCESSOR_DB,
+            TAG_NOTIFICATION_TOPIC,
+            FORCE_SEND_NOTIFICATION
+        } = process.env;
 
         const sqsAdapter = new SqsAdapter(event);
         const dynamoDbAdapter = new DynamoDbAdapter(<string>TAG_PROCESSOR_DB);
@@ -15,7 +19,9 @@ export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
             snsAdapter
         );
 
-        await salesProcessor.processSales();
+        const forceSendNotification =
+            <string>FORCE_SEND_NOTIFICATION === 'true' ? true : false;
+        await salesProcessor.processSales(forceSendNotification);
     } catch (err) {
         console.log(err);
     }

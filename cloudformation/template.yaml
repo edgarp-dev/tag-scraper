@@ -72,6 +72,7 @@ Resources:
         Variables:
           TAG_PROCESSOR_DB: !Ref TagProcessorDynamoDb
           TAG_NOTIFICATION_TOPIC: !Ref TagNotificationTopic
+          FORCE_SEND_NOTIFICATION: false
       Events:
         TagQueueEvent:
           Type: SQS
