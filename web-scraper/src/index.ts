@@ -6,7 +6,7 @@ import SnsAdapter from './adapters/SnsAdapter';
 
 dotenv.config();
 
-const VERSION = '1.2.3';
+const VERSION = '1.2.4';
 
 const {
     IS_LOCAL_HOST,

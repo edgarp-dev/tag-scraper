@@ -64,10 +64,10 @@ export default class SalesProcessor {
 
     private parseScrapedContent(scrapedContent: ScrapedContent[]): Sale[] {
         return scrapedContent.map((content: ScrapedContent) => {
-            const { articleId, title, price, image, link, isExpired } = content;
+            const { threadId, title, price, image, link, isExpired } = content;
 
             return {
-                articleId: articleId ?? '',
+                threadId: threadId ?? '',
                 title: title ?? '',
                 price: price ?? '',
                 image: image ?? '',
@@ -85,12 +85,12 @@ export default class SalesProcessor {
             ? sales
             : sales.filter((sale) => !sale.isExpired);
         const salesNotInCache = activeSales.filter(
-            ({ articleId }: Sale) => !this.cacheService.get(articleId)
+            ({ threadId }: Sale) => !this.cacheService.get(threadId)
         );
 
         for (const saleNotCached of salesNotInCache) {
-            const { articleId } = saleNotCached;
-            this.cacheService.set(articleId);
+            const { threadId } = saleNotCached;
+            this.cacheService.set(threadId);
         }
 
         return salesNotInCache;

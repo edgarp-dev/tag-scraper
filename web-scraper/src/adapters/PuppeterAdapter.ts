@@ -71,10 +71,12 @@ export default class PuppeterAdapter implements ScraperService {
                             .textContent.trim();
 
                         return {
-                            articleId: article.id.replace('thread_', ''),
+                            threadId: article.id,
+                            id: article.id.replace('thread_', ''),
                             title: threadLinkElement.textContent,
                             price,
                             image,
+                            link: '',
                             isExpired: isExpired === 'Expirado'
                         };
                     });
@@ -86,8 +88,8 @@ export default class PuppeterAdapter implements ScraperService {
         await browser.close();
 
         const scrapperContentWithLinks = scrapedContent.map((item) => {
-            const { title, articleId } = item;
-            const link = `https://www.promodescuentos.com/ofertas/${this.removeWhiteSpacesAndEspecialCharacters(title)}-${articleId}`;
+            const { title, threadId } = item;
+            const link = `https://www.promodescuentos.com/ofertas/${this.removeWhiteSpacesAndEspecialCharacters(title)}-${threadId}`;
 
             return {
                 ...item,

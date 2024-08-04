@@ -50,14 +50,14 @@ export default class SqsAdapter implements QueueService {
         sales: Sale[]
     ): SendMessageBatchRequestEntry[] {
         return sales.map((sale) => {
-            const { title, articleId, price, image, link } = sale;
+            const { title, threadId, price, image, link } = sale;
             return {
                 Id: uuidv4(),
                 MessageBody: title,
                 MessageAttributes: {
-                    articleId: {
+                    threadId: {
                         DataType: 'String',
-                        StringValue: articleId
+                        StringValue: threadId
                     },
                     title: {
                         DataType: 'String',
