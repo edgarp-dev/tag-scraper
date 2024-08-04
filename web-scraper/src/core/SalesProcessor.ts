@@ -8,7 +8,7 @@ import { ScrapedContent } from '../ports/ScraperService';
 import { Sale } from './types';
 
 export default class SalesProcessor {
-    private readonly tags = ['bug', 'error', 'corran', 'preciazo'];
+    private readonly tags = ['bug', 'error', 'corran'];
 
     private readonly scraperService: ScraperService;
 
@@ -34,7 +34,10 @@ export default class SalesProcessor {
         this.env = env;
     }
 
-    public async processSales(isLocalHost: boolean): Promise<Sale[]> {
+    public async processSales(
+        isLocalHost: boolean,
+        forceSendNotitfication: boolean
+    ): Promise<Sale[]> {
         let sales: Sale[] = [];
 
         try {
@@ -56,15 +59,15 @@ export default class SalesProcessor {
             );
         }
 
-        return this.getActiveSales(sales);
+        return this.getActiveSales(sales, forceSendNotitfication);
     }
 
     private parseScrapedContent(scrapedContent: ScrapedContent[]): Sale[] {
         return scrapedContent.map((content: ScrapedContent) => {
-            const { articleId, title, price, image, link, isExpired } = content;
+            const { threadId, title, price, image, link, isExpired } = content;
 
             return {
-                articleId: articleId ?? '',
+                threadId: threadId ?? '',
                 title: title ?? '',
                 price: price ?? '',
                 image: image ?? '',
@@ -74,15 +77,20 @@ export default class SalesProcessor {
         });
     }
 
-    private getActiveSales(sales: Sale[]): Sale[] {
-        const activeSales = sales.filter((sale) => !sale.isExpired);
+    private getActiveSales(
+        sales: Sale[],
+        forceSendNotitfication: boolean
+    ): Sale[] {
+        const activeSales = forceSendNotitfication
+            ? sales
+            : sales.filter((sale) => !sale.isExpired);
         const salesNotInCache = activeSales.filter(
-            ({ articleId }: Sale) => !this.cacheService.get(articleId)
+            ({ threadId }: Sale) => !this.cacheService.get(threadId)
         );
 
         for (const saleNotCached of salesNotInCache) {
-            const { articleId } = saleNotCached;
-            this.cacheService.set(articleId);
+            const { threadId } = saleNotCached;
+            this.cacheService.set(threadId);
         }
 
         return salesNotInCache;
