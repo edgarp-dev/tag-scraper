@@ -25,7 +25,7 @@ export default class TelegramAdapter implements NotificationService {
 
 ${price}
 
-[COMPRAR](${link})`;
+[IR A LA OFERTA](${link})`;
 
         console.log(`SENDING MESSAGE TO TELEGRAM CHANNEL: ${channelId}`);
         console.log(channelId, markdownMessage);

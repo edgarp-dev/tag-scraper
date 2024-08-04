@@ -1,9 +1,9 @@
 import {
     DynamoDBClient,
     PutItemCommand,
-    QueryCommand
+    GetItemCommand
 } from '@aws-sdk/client-dynamodb';
-import { marshall } from '@aws-sdk/util-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import Sale from '../core/Sale';
 import { DbRepository } from '../ports';
 
@@ -29,21 +29,14 @@ export default class DynamoDbAdapter implements DbRepository {
     public async get(
         key: string
     ): Promise<Record<string, unknown> | undefined> {
-        const queryParams = {
+        const params = {
             TableName: this.tableName,
-            IndexName: 'TitleIndex',
-            KeyConditionExpression: 'title = :title',
-            ExpressionAttributeValues: {
-                ':title': { S: key }
-            },
-            ProjectionExpression: 'title'
+            Key: marshall({ id: key }) 
         };
 
-        const dbItems = await this.dbClient.send(new QueryCommand(queryParams));
-        if (dbItems.Items && dbItems.Count && dbItems.Count > 0) {
-            const saleFromDb = dbItems.Items[0];
-
-            return saleFromDb;
+        const response = await this.dbClient.send(new GetItemCommand(params));
+        if (response.Item) {
+            return unmarshall(response.Item);
         }
 
         return undefined;
