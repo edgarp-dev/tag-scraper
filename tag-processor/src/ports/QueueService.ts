@@ -1,5 +1,5 @@
-import Sale from '../core/Sale';
+import SaleMessage from '../core/SaleMessage';
 
 export default interface QueueService {
-    getSalesMessages(): Sale[];
+    getSalesMessages(): SaleMessage[];
 }

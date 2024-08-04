@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 import { DbRepository, NotificationService, QueueService } from '../ports';
 
 export default class SalesProcessor {
@@ -22,8 +21,8 @@ export default class SalesProcessor {
         const salesMessages = this.queueService.getSalesMessages();
 
         for (const saleMessage of salesMessages) {
-            const { title, image, price, link } = saleMessage;
-            const saleFromDb = await this.dbRepository.get(title);
+            const { threadId, title, image, price, link } = saleMessage;
+            const saleFromDb = await this.dbRepository.get(threadId);
 
             if (!saleFromDb || forceSendNotitication) {
                 console.log(
@@ -32,11 +31,12 @@ export default class SalesProcessor {
                         : 'ITEM NOT PROCESSED, SAVING TO DB'
                 );
                 const sale = {
-                    id: uuid(),
+                    id: threadId,
                     title: title,
                     image: image,
                     price: price,
-                    link: link
+                    link: link,
+                    savedAt: new Date().toISOString()
                 };
 
                 await this.dbRepository.create(sale);

@@ -1,5 +1,5 @@
 export default class Sale {
-    public id = '';
+    public threadId = '';
 
     public image = '';
 
@@ -8,6 +8,4 @@ export default class Sale {
     public link = '';
 
     public title = '';
-
-    public savedAt = '';
 }
