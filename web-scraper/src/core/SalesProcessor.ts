@@ -8,7 +8,7 @@ import { ScrapedContent } from '../ports/ScraperService';
 import { Sale } from './types';
 
 export default class SalesProcessor {
-    private readonly tags = ['bug'];
+    private readonly tags = ['bug', 'error', 'corran'];
 
     private readonly scraperService: ScraperService;
 
