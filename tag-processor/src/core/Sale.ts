@@ -1,5 +1,6 @@
 export default class Sale {
     public id = '';
+    
     public image = '';
 
     public price = '';
