@@ -8,7 +8,6 @@
     "dev": "npx nodemon",
     "lint": "eslint . -c eslint.config.mjs",
     "lint:fix": "eslint . -c eslint.config.mjs --fix",
-    "prettier": "prettier 'src/**/*.ts' --write",
     "sanity": "tsc --noEmit && npm run lint",
     "prod": "npm run build && node build/index.js",
     "build": "rimraf ./build && tsc"
