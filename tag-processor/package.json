@@ -1,36 +1,38 @@
 {
-    "name": "tag-processor",
-    "version": "1.0.0",
-    "description": "Tag processor",
-    "main": "app.ts",
-    "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
-    "author": "SAM CLI",
-    "license": "MIT",
-    "scripts": {
-        "compile": "tsc",
-        "lint": "eslint '**/*.{ts,tsx}'",
-        "lint:fix": "eslint '**/*.{ts,tsx}' --fix",
-        "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
-        "sanity": "tsc --noEmit && npm run lint"
-    },
-    "dependencies": {
-        "@aws-sdk/client-dynamodb": "^3.623.0",
-        "@aws-sdk/client-sns": "^3.623.0",
-        "@aws-sdk/util-dynamodb": "^3.623.0",
-        "esbuild": "^0.23.0",
-        "uuid": "^10.0.0"
-    },
-    "devDependencies": {
-        "@types/aws-lambda": "^8.10.142",
-        "@types/node": "^22.1.0",
-        "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.0.0",
-        "@typescript-eslint/parser": "^8.0.0",
-        "eslint": "^9.8.0",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-prettier": "^5.2.1",
-        "prettier": "^3.3.3",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.5.4"
-    }
+  "name": "tag-processor",
+  "version": "1.0.0",
+  "description": "Tag processor",
+  "main": "app.ts",
+  "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "scripts": {
+    "compile": "tsc",
+    "lint": "eslint . -c eslint.config.mjs",
+    "lint:fix": "eslint . -c eslint.config.mjs --fix",
+    "sanity": "tsc --noEmit && npm run lint"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/client-sns": "^3.750.0",
+    "@aws-sdk/util-dynamodb": "^3.750.0",
+    "esbuild": "^0.25.0",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.4",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.24.1",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^15.15.0",
+    "prettier": "^3.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1"
+  }
 }

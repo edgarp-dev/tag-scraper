@@ -1,11 +1,11 @@
 export default class Sale {
-    public threadId = '';
+  public threadId = '';
 
-    public image = '';
+  public image = '';
 
-    public price = '';
+  public price = '';
 
-    public link = '';
+  public link = '';
 
-    public title = '';
+  public title = '';
 }
