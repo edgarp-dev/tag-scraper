@@ -1,3 +1,3 @@
 export default interface NotificationService {
-    publishNotification(message: string): Promise<void>;
+  publishNotification(message: string): Promise<void>;
 }

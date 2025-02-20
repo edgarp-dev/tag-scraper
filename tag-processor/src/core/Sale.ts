@@ -1,13 +1,13 @@
 export default class Sale {
-    public id = '';
+  public id = '';
 
-    public image = '';
+  public image = '';
 
-    public price = '';
+  public price = '';
 
-    public link = '';
+  public link = '';
 
-    public title = '';
+  public title = '';
 
-    public savedAt = '';
+  public savedAt = '';
 }
