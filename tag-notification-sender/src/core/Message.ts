@@ -1,6 +1,6 @@
 export default class Message {
-    public image = '';
-    public title = '';
-    public price = '';
-    public link = '';
+  public image = '';
+  public title = '';
+  public price = '';
+  public link = '';
 }
