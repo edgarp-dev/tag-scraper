@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-extra';
 import { LaunchOptions } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { TagProcessorService } from '../ports';
-import { ScrapedContent } from '../ports/ScraperService';
+import { ScrapedContent } from '../ports/TagProcessorService';
 
 puppeteer.use(StealthPlugin());
 

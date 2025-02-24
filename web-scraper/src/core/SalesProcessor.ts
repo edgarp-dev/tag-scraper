@@ -4,7 +4,7 @@ import {
   QueueService,
   TagProcessorService
 } from '../ports';
-import { ScrapedContent } from '../ports/ScraperService';
+import { ScrapedContent } from '../ports/TagProcessorService';
 import { Sale } from './types';
 
 export default class SalesProcessor {
