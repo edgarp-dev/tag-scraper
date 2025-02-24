@@ -1,5 +1,6 @@
-import PuppeterAdapter from './PuppeterAdapter';
+import PuppeterAdapter from './TagsProcesorAdapter';
 import NodeCacheAdapter from './NodeCacheAdapter';
 import SqsAdapter from './SqsAdapter';
+import LoginAdapter from './LoginAdapter';
 
-export { PuppeterAdapter, NodeCacheAdapter, SqsAdapter };
+export { PuppeterAdapter, NodeCacheAdapter, SqsAdapter, LoginAdapter };

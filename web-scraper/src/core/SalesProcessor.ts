@@ -2,15 +2,16 @@ import {
   CacheService,
   NotificationService,
   QueueService,
-  ScraperService
+  TagProcessorService
 } from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
 import { Sale } from './types';
 
 export default class SalesProcessor {
-  private readonly tags = ['bug', 'error', 'corran'];
+  // private readonly tags = ['bug', 'error', 'corran'];
+  private readonly tags = ['bug'];
 
-  private readonly scraperService: ScraperService;
+  private readonly tagProcessorService: TagProcessorService;
 
   private readonly cacheService: CacheService;
 
@@ -21,13 +22,13 @@ export default class SalesProcessor {
   private readonly env: string;
 
   constructor(
-    scraperService: ScraperService,
+    tagProcessorService: TagProcessorService,
     cacheService: CacheService,
     queueService: QueueService,
     notificationService: NotificationService,
     env: string
   ) {
-    this.scraperService = scraperService;
+    this.tagProcessorService = tagProcessorService;
     this.cacheService = cacheService;
     this.queueService = queueService;
     this.notificationService = notificationService;
@@ -43,7 +44,7 @@ export default class SalesProcessor {
     try {
       for (const tag of this.tags) {
         const url = `https://www.promodescuentos.com/search?q=${tag}`;
-        const scrapedContent = await this.scraperService.scrapPage(
+        const scrapedContent = await this.tagProcessorService.processTags(
           isLocalHost,
           url
         );

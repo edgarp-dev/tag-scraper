@@ -1,13 +1,13 @@
 import puppeteer from 'puppeteer-extra';
 import { LaunchOptions } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { ScraperService } from '../ports';
+import { TagProcessorService } from '../ports';
 import { ScrapedContent } from '../ports/ScraperService';
 
 puppeteer.use(StealthPlugin());
 
-export default class PuppeterAdapter implements ScraperService {
-  public async scrapPage(
+export default class PuppeterAdapter implements TagProcessorService {
+  public async processTags(
     isLocalHost: boolean,
     url: string
   ): Promise<ScrapedContent[]> {
@@ -39,6 +39,8 @@ export default class PuppeterAdapter implements ScraperService {
       this.timeOut()
     ]);
 
+    page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
+
     const containerElement = await page.$('.js-threadList');
     if (containerElement) {
       console.log('PROCESSING SCRAPED ELEMENTS');
@@ -47,27 +49,30 @@ export default class PuppeterAdapter implements ScraperService {
           const threadLinkElement = article.querySelector(
             '.thread-title .thread-link'
           );
+          const title = threadLinkElement?.textContent?.trim() ?? '';
 
           const priceElement = article.querySelector(
-            '.overflow--fade .threadItemCard-price'
+            '.text--b.size--all-xl.size--fromW3-xxl'
           );
-          const price = priceElement ? priceElement.textContent.trim() : '$0';
+          const price = priceElement?.textContent?.trim() ?? '$0';
 
-          const imgElement = article.querySelector('.threadGrid-image img');
-          const image = imgElement ? imgElement.getAttribute('src') : '';
+          const imgElement = article.querySelector('.threadListCard-image img');
+          const image = imgElement?.getAttribute('src') ?? '';
 
-          const isExpired = article
-            .querySelector('.threadGrid-headerMeta .size--all-s')
-            .textContent.trim();
+          const expiredElement = article.querySelector(
+            '.chip--type-expired .size--all-s'
+          );
+          const isExpired =
+            expiredElement?.textContent?.trim().includes('Expiró') ?? false;
 
           return {
             threadId: article.id,
             id: article.id.replace('thread_', ''),
-            title: threadLinkElement.textContent,
+            title: title,
             price,
             image,
             link: '',
-            isExpired: isExpired === 'Expirado'
+            isExpired
           };
         });
       });
@@ -78,7 +83,7 @@ export default class PuppeterAdapter implements ScraperService {
 
     const scrapperContentWithLinks = scrapedContent.map((item) => {
       const { title, threadId } = item;
-      const link = `https://www.promodescuentos.com/ofertas/${this.removeWhiteSpacesAndEspecialCharacters(title)}-${threadId}`;
+      const link = `https://www.promodescuentos.com/ofertas/${this.convertTextToUrlFormat(title)}-${threadId}`;
 
       return {
         ...item,
@@ -86,11 +91,18 @@ export default class PuppeterAdapter implements ScraperService {
       };
     });
 
+    for (const item of scrapperContentWithLinks) {
+      console.log(item);
+    }
+
     return scrapperContentWithLinks;
   }
 
-  private removeWhiteSpacesAndEspecialCharacters(text: string): string {
-    let result = text.replace(/ /g, '-');
+  private convertTextToUrlFormat(text: string): string {
+    let result = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    result = result.replace(/ /g, '-');
+
     result = result.replace(/[^\w-]/g, '');
 
     return result.toLowerCase();
