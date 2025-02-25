@@ -13,7 +13,7 @@ import { wait } from './utils/promiseUtils';
 
 dotenv.config();
 
-const VERSION = '1.3.1';
+const VERSION = '1.3.2';
 
 const {
   IS_LOCAL_HOST,
@@ -43,18 +43,22 @@ console.log(forceSendNotitfication);
 async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);
 
-  await loginAdapter.login(isLocalHost);
+  try {
+    await loginAdapter.login(isLocalHost);
 
-  await wait(2);
+    await wait(2);
 
-  const sales = await salesProcessor.processSales(
-    isLocalHost,
-    forceSendNotitfication
-  );
+    const sales = await salesProcessor.processSales(
+      isLocalHost,
+      forceSendNotitfication
+    );
 
-  webScraperAdapter.closeBrowser();
+    webScraperAdapter.closeBrowser();
 
-  await salesProcessor.sendQueueBatchMessages(sales);
+    await salesProcessor.sendQueueBatchMessages(sales);
+  } catch (error: unknown) {
+    console.error(error);
+  }
 }
 
 if (!isLocalHost) {
