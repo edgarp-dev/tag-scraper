@@ -1,19 +1,12 @@
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import {
-  LoginAdapter,
-  NodeCacheAdapter,
-  TagsProcessorAdapter,
-  SqsAdapter,
-  WebScraperAdapter
-} from './adapters';
+import { NodeCacheAdapter, PuppeterAdapter, SqsAdapter } from './adapters';
 import { SalesProcessor } from './core';
 import SnsAdapter from './adapters/SnsAdapter';
-import { wait } from './utils/promiseUtils';
 
 dotenv.config();
 
-const VERSION = '1.3.0';
+const VERSION = '1.2.4';
 
 const {
   IS_LOCAL_HOST,
@@ -22,14 +15,12 @@ const {
   ERROR_SNS_TOPIC_ARN,
   FORCE_SEND_NOTIFICATION
 } = process.env;
-const webScraperAdapter = new WebScraperAdapter();
-const tagProcessorService = new TagsProcessorAdapter(webScraperAdapter);
+const puppeterAdapter = new PuppeterAdapter();
 const nodeCacheAdapter = new NodeCacheAdapter();
 const sqsAdapter = new SqsAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
 const notificationAdapter = new SnsAdapter(<string>ERROR_SNS_TOPIC_ARN);
-const loginAdapter = new LoginAdapter(webScraperAdapter);
 const salesProcessor = new SalesProcessor(
-  tagProcessorService,
+  puppeterAdapter,
   nodeCacheAdapter,
   sqsAdapter,
   notificationAdapter,
@@ -38,22 +29,14 @@ const salesProcessor = new SalesProcessor(
 
 const isLocalHost = IS_LOCAL_HOST === 'true';
 const forceSendNotitfication = FORCE_SEND_NOTIFICATION === 'true';
-console.log(forceSendNotitfication);
 
 async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);
-
-  await loginAdapter.login(isLocalHost);
-
-  await wait(2);
 
   const sales = await salesProcessor.processSales(
     isLocalHost,
     forceSendNotitfication
   );
-
-  webScraperAdapter.closeBrowser();
-
   await salesProcessor.sendQueueBatchMessages(sales);
 }
 
