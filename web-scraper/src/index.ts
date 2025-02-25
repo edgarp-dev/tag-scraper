@@ -53,6 +53,7 @@ async function scrapTags() {
   );
 
   webScraperAdapter.closeBrowser();
+
   await salesProcessor.sendQueueBatchMessages(sales);
 }
 

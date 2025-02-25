@@ -33,6 +33,7 @@ export default class TagProcessorAdapter implements TagProcessorService {
     const containerElement = await page.$('.js-threadList');
     if (containerElement) {
       console.log('PROCESSING SCRAPED ELEMENTS');
+
       const tagSales = await containerElement.$$eval('article', (articles) => {
         return articles.map((article) => {
           const threadLinkElement = article.querySelector(
@@ -69,8 +70,6 @@ export default class TagProcessorAdapter implements TagProcessorService {
       });
       scrapedContent = scrapedContent.concat(tagSales);
     }
-
-    // await browser.close();
 
     return scrapedContent;
   }

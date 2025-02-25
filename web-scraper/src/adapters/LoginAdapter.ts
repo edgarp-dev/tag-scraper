@@ -2,6 +2,7 @@ import { LoginService, WebScraperService } from '../ports';
 
 export default class LoginAdapter implements LoginService {
   private readonly webScraper: WebScraperService;
+
   constructor(webScrapper: WebScraperService) {
     this.webScraper = webScrapper;
   }
