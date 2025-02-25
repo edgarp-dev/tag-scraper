@@ -13,7 +13,7 @@ import { wait } from './utils/promiseUtils';
 
 dotenv.config();
 
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 
 const {
   IS_LOCAL_HOST,
