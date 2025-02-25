@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug TS Puppeteer",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/src/index.ts",
+      "outFiles": [],
+      "sourceMaps": true,
+      "smartStep": true,
+      "internalConsoleOptions": "neverOpen",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    }
+  ]
+}
