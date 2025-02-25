@@ -8,6 +8,6 @@ export type ScrapedContent = {
   isExpired: boolean;
 };
 
-export interface TagProcessorService {
-  processTags(isLocalHost: boolean, url: string): Promise<ScrapedContent[]>;
+export interface ScraperService {
+  scrapPage(isLocalHost: boolean, url: string): Promise<ScrapedContent[]>;
 }
