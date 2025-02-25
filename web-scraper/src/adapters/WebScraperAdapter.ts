@@ -12,7 +12,7 @@ export default class WebScraperAdapter implements WebScraperService {
 
   public async getBroswer(isLocalHost: boolean): Promise<Browser> {
     const launchConfig: LaunchOptions = {
-      headless: false,
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     };
 
