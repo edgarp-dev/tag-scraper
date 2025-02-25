@@ -35,12 +35,12 @@ export default class LoginAdapter implements LoginService {
 
     await page.waitForSelector('input[name="password"]', { visible: true });
     await page.$eval('input[name="password"]', (input) => {
-      const password = 'zWt7)I44z!8_';
+      const value = 'zWt7)I44z!8_';
       input.focus();
-      for (let i = 0; i < password.length; i++) {
+      for (let i = 0; i < value.length; i++) {
         const event = new KeyboardEvent('keydown', { bubbles: true });
         input.dispatchEvent(event);
-        input.value += password[i];
+        input.value += value[i];
         const inputEvent = new Event('input', { bubbles: true });
         input.dispatchEvent(inputEvent);
       }

@@ -51,6 +51,8 @@ async function scrapTags() {
     isLocalHost,
     forceSendNotitfication
   );
+
+  webScraperAdapter.closeBrowser();
   await salesProcessor.sendQueueBatchMessages(sales);
 }
 

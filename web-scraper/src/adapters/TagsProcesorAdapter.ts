@@ -70,7 +70,7 @@ export default class TagProcessorAdapter implements TagProcessorService {
       scrapedContent = scrapedContent.concat(tagSales);
     }
 
-    await browser.close();
+    // await browser.close();
 
     return scrapedContent;
   }

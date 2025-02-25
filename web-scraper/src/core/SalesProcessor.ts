@@ -5,11 +5,11 @@ import {
   TagProcessorService
 } from '../ports';
 import { ScrapedContent } from '../ports/TagProcessorService';
+import { wait } from '../utils/promiseUtils';
 import { Sale } from './types';
 
 export default class SalesProcessor {
-  // private readonly tags = ['bug', 'error', 'corran'];
-  private readonly tags = ['bug'];
+  private readonly tags = ['bug', 'error', 'corran'];
 
   private readonly tagProcessorService: TagProcessorService;
 
@@ -50,6 +50,8 @@ export default class SalesProcessor {
         );
 
         sales = sales.concat(this.parseScrapedContent(scrapedContent));
+
+        await wait(2);
       }
     } catch (error: unknown) {
       console.error(error);

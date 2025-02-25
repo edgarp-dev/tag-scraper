@@ -38,4 +38,8 @@ export default class WebScraperAdapter implements WebScraperService {
 
     return this.page;
   }
+
+  public async closeBrowser(): Promise<void> {
+    await this.broswer?.close();
+  }
 }
