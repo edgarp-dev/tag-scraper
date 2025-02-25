@@ -1,36 +1,25 @@
-import puppeteer from 'puppeteer-extra';
-import { LaunchOptions } from 'puppeteer';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { TagProcessorService } from '../ports';
+import { TagProcessorService, WebScraperService } from '../ports';
 import { ScrapedContent } from '../ports/TagProcessorService';
 
-puppeteer.use(StealthPlugin());
+export default class TagProcessorAdapter implements TagProcessorService {
+  private readonly webScraper: WebScraperService;
+  constructor(webScrapper: WebScraperService) {
+    this.webScraper = webScrapper;
+  }
 
-export default class PuppeterAdapter implements TagProcessorService {
   public async processTags(
     isLocalHost: boolean,
     url: string
   ): Promise<ScrapedContent[]> {
-    const launchConfig: LaunchOptions = {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    };
-
-    if (!isLocalHost) {
-      launchConfig['executablePath'] = '/usr/bin/google-chrome';
-    }
-
-    const browser = await puppeteer.launch(launchConfig);
-
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    );
+    const browser = await this.webScraper.getBroswer(isLocalHost);
+    const page = await this.webScraper.getPage(browser);
 
     let scrapedContent: ScrapedContent[] = [];
 
     console.log(`OPENING URL: ${url}`);
-    await page.goto(url);
+    await page.goto(url, {
+      waitUntil: 'networkidle2'
+    });
 
     console.log('SCRAPING HTML ELEMENTS');
 
@@ -59,6 +48,8 @@ export default class PuppeterAdapter implements TagProcessorService {
           const imgElement = article.querySelector('.threadListCard-image img');
           const image = imgElement?.getAttribute('src') ?? '';
 
+          const link = threadLinkElement?.getAttribute('href') ?? '';
+
           const expiredElement = article.querySelector(
             '.chip--type-expired .size--all-s'
           );
@@ -71,7 +62,7 @@ export default class PuppeterAdapter implements TagProcessorService {
             title: title,
             price,
             image,
-            link: '',
+            link,
             isExpired
           };
         });
@@ -81,37 +72,7 @@ export default class PuppeterAdapter implements TagProcessorService {
 
     await browser.close();
 
-    const scrapperContentWithLinks = scrapedContent.map((item) => {
-      const { title, threadId } = item;
-      const link = `https://www.promodescuentos.com/ofertas/${this.convertTextToUrlFormat(title)}-${threadId}`;
-
-      return {
-        ...item,
-        link
-      };
-    });
-
-    for (const item of scrapperContentWithLinks) {
-      console.log(item);
-    }
-
-    return scrapperContentWithLinks;
-  }
-
-  private convertTextToUrlFormat(text: string): string {
-    let result = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-    result = result.replace(/ /g, '-');
-
-    result = result.replace(/[^\w-]/g, '');
-
-    return result.toLowerCase();
-  }
-
-  private wait(seconds: number): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(resolve, seconds * 1000);
-    });
+    return scrapedContent;
   }
 
   private timeOut(): Promise<void> {
