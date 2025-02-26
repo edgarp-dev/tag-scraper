@@ -13,7 +13,7 @@ import { wait } from './utils/promiseUtils';
 
 dotenv.config();
 
-const VERSION = '1.3.3';
+const VERSION = '1.3.4';
 
 const {
   IS_LOCAL_HOST,
@@ -38,7 +38,6 @@ const salesProcessor = new SalesProcessor(
 
 const isLocalHost = IS_LOCAL_HOST === 'true';
 const forceSendNotitfication = FORCE_SEND_NOTIFICATION === 'true';
-console.log(forceSendNotitfication);
 
 async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);

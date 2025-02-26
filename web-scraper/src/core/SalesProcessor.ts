@@ -41,25 +41,16 @@ export default class SalesProcessor {
   ): Promise<Sale[]> {
     let sales: Sale[] = [];
 
-    try {
-      for (const tag of this.tags) {
-        const url = `https://www.promodescuentos.com/search?q=${tag}`;
-        const scrapedContent = await this.tagProcessorService.processTags(
-          isLocalHost,
-          url
-        );
-
-        sales = sales.concat(this.parseScrapedContent(scrapedContent));
-
-        await wait(2);
-      }
-    } catch (error: unknown) {
-      console.error(error);
-
-      await this.notificationService.notifyError(
-        (error as Error).message,
-        this.env
+    for (const tag of this.tags) {
+      const url = `https://www.promodescuentos.com/search?q=${tag}`;
+      const scrapedContent = await this.tagProcessorService.processTags(
+        isLocalHost,
+        url
       );
+
+      sales = sales.concat(this.parseScrapedContent(scrapedContent));
+
+      await wait(2);
     }
 
     return this.getActiveSales(sales, forceSendNotitfication);
