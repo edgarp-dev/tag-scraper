@@ -12,8 +12,8 @@ export default class WebScraperAdapter implements WebScraperService {
 
   public async getBroswer(isLocalHost: boolean): Promise<Browser> {
     const launchConfig: LaunchOptions = {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      headless: 'shell',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
     };
 
     if (!isLocalHost) {
@@ -37,6 +37,18 @@ export default class WebScraperAdapter implements WebScraperService {
     );
 
     return this.page;
+  }
+
+  public async openNewPage(browser: Browser): Promise<Page> {
+    const page = await browser.newPage();
+
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    );
+
+    this.page = page;
+
+    return page;
   }
 
   public async closeBrowser(): Promise<void> {

@@ -12,7 +12,7 @@ export default class TagProcessorAdapter implements TagProcessorService {
     url: string
   ): Promise<ScrapedContent[]> {
     const browser = await this.webScraper.getBroswer(isLocalHost);
-    const page = await this.webScraper.getPage(browser);
+    const page = await this.webScraper.openNewPage(browser);
 
     let scrapedContent: ScrapedContent[] = [];
 
