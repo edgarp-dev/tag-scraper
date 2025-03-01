@@ -13,7 +13,7 @@ import TelegramAdapter from './adapters/TelegramAdapter';
 
 dotenv.config();
 
-const VERSION = '1.3.6';
+const VERSION = '1.3.7';
 
 const {
   IS_LOCAL_HOST,
@@ -42,7 +42,6 @@ async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);
 
   try {
-    throw new Error('Error: This is a test error');
     await loginAdapter.login(isLocalHost);
 
     await wait(2);
