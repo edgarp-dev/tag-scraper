@@ -36,6 +36,7 @@
     "@aws-sdk/client-sns": "^3.744.0",
     "@aws-sdk/client-sqs": "^3.744.0",
     "@aws-sdk/credential-providers": "^3.744.0",
+    "axios": "^1.8.1",
     "dotenv": "^16.4.7",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
