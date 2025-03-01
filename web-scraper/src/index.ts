@@ -8,31 +8,30 @@ import {
   WebScraperAdapter
 } from './adapters';
 import { SalesProcessor } from './core';
-import SnsAdapter from './adapters/SnsAdapter';
 import { wait } from './utils/promiseUtils';
+import TelegramAdapter from './adapters/TelegramAdapter';
 
 dotenv.config();
 
-const VERSION = '1.3.5';
+const VERSION = '1.3.6';
 
 const {
   IS_LOCAL_HOST,
   AWS_ACCOUNT_ID,
   ENV,
-  ERROR_SNS_TOPIC_ARN,
-  FORCE_SEND_NOTIFICATION
+  FORCE_SEND_NOTIFICATION,
+  TELEGRAM_BOT_TOKEN
 } = process.env;
 const webScraperAdapter = new WebScraperAdapter();
 const tagProcessorService = new TagsProcessorAdapter(webScraperAdapter);
 const nodeCacheAdapter = new NodeCacheAdapter();
 const sqsAdapter = new SqsAdapter(<string>AWS_ACCOUNT_ID, <string>ENV);
-const notificationAdapter = new SnsAdapter(<string>ERROR_SNS_TOPIC_ARN);
+const notificationAdapter = new TelegramAdapter(<string>TELEGRAM_BOT_TOKEN);
 const loginAdapter = new LoginAdapter(webScraperAdapter);
 const salesProcessor = new SalesProcessor(
   tagProcessorService,
   nodeCacheAdapter,
   sqsAdapter,
-  notificationAdapter,
   <string>ENV
 );
 
@@ -43,6 +42,7 @@ async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);
 
   try {
+    throw new Error('Error: This is a test error');
     await loginAdapter.login(isLocalHost);
 
     await wait(2);
@@ -57,6 +57,8 @@ async function scrapTags() {
     await salesProcessor.sendQueueBatchMessages(sales);
   } catch (error: unknown) {
     console.error(error);
+
+    notificationAdapter.notifyError((error as Error).message);
   }
 }
 
