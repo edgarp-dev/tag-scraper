@@ -1,9 +1,4 @@
-import {
-  CacheService,
-  NotificationService,
-  QueueService,
-  TagProcessorService
-} from '../ports';
+import { CacheService, QueueService, TagProcessorService } from '../ports';
 import { ScrapedContent } from '../ports/TagProcessorService';
 import { wait } from '../utils/promiseUtils';
 import { Sale } from './types';
@@ -17,21 +12,17 @@ export default class SalesProcessor {
 
   private readonly queueService: QueueService;
 
-  private readonly notificationService: NotificationService;
-
   private readonly env: string;
 
   constructor(
     tagProcessorService: TagProcessorService,
     cacheService: CacheService,
     queueService: QueueService,
-    notificationService: NotificationService,
     env: string
   ) {
     this.tagProcessorService = tagProcessorService;
     this.cacheService = cacheService;
     this.queueService = queueService;
-    this.notificationService = notificationService;
     this.env = env;
   }
 
@@ -91,15 +82,6 @@ export default class SalesProcessor {
   }
 
   public async sendQueueBatchMessages(sales: Sale[]): Promise<void> {
-    try {
-      await this.queueService.sendBatchMessages(sales);
-    } catch (error: unknown) {
-      console.error(error);
-
-      await this.notificationService.notifyError(
-        (error as Error).message,
-        this.env
-      );
-    }
+    await this.queueService.sendBatchMessages(sales);
   }
 }
