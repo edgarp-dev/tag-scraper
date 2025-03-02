@@ -1,4 +1,6 @@
 import axios from 'axios';
+import fs from 'fs';
+import FormData from 'form-data';
 import { NotificationService } from '../ports';
 
 export default class TelegramAdapter implements NotificationService {
@@ -8,19 +10,23 @@ export default class TelegramAdapter implements NotificationService {
     this.telegramToken = telegramToken;
   }
 
-  public async notifyError(message: string): Promise<void> {
+  public async notifyError(message: string, photoPath: string): Promise<void> {
     const telegramApiUrl = 'https://api.telegram.org/bot';
     const channelId = '-1002253352797';
-    const url = `${telegramApiUrl}${this.telegramToken}/sendMessage`;
+    const url = `${telegramApiUrl}${this.telegramToken}/sendPhoto`;
 
     const currentDate = new Date();
     const formattedDate = this.formatDate(currentDate);
     const errorMessage = `Error message: ${message}.\nDate: ${formattedDate}`;
 
     try {
-      const response = await axios.post(url, {
-        chat_id: channelId,
-        text: errorMessage
+      const form = new FormData();
+      form.append('chat_id', channelId);
+      form.append('photo', fs.createReadStream(photoPath));
+      form.append('caption', errorMessage);
+
+      const response = await axios.post(url, form, {
+        headers: form.getHeaders()
       });
 
       console.log('Message sent successfully:', response.data);

@@ -13,6 +13,10 @@ export default class WebScraperAdapter implements WebScraperService {
   public async getBroswer(isLocalHost: boolean): Promise<Browser> {
     const launchConfig: LaunchOptions = {
       headless: 'shell',
+      defaultViewport: {
+        width: 1366,
+        height: 768
+      },
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
     };
 

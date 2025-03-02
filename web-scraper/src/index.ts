@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import cron from 'node-cron';
+import fs from 'fs';
 import {
   LoginAdapter,
   NodeCacheAdapter,
@@ -10,10 +11,11 @@ import {
 import { SalesProcessor } from './core';
 import { wait } from './utils/promiseUtils';
 import TelegramAdapter from './adapters/TelegramAdapter';
+import { Page } from 'puppeteer';
 
 dotenv.config();
 
-const VERSION = '1.3.7';
+const VERSION = '1.3.8';
 
 const {
   IS_LOCAL_HOST,
@@ -41,7 +43,12 @@ const forceSendNotitfication = FORCE_SEND_NOTIFICATION === 'true';
 async function scrapTags() {
   console.log(`VERSION: ${VERSION}`);
 
+  const screenshotPath = 'error_screenshot.png';
+  let page: Page | undefined;
   try {
+    const browser = await webScraperAdapter.getBroswer(isLocalHost);
+    page = await webScraperAdapter.getPage(browser);
+
     await loginAdapter.login(isLocalHost);
 
     await wait(2);
@@ -57,7 +64,20 @@ async function scrapTags() {
   } catch (error: unknown) {
     console.error(error);
 
-    notificationAdapter.notifyError((error as Error).message);
+    await page?.screenshot({ path: screenshotPath });
+    console.log(`Screenshot saved to: ${screenshotPath}`);
+
+    await notificationAdapter.notifyError(
+      (error as Error).message,
+      screenshotPath
+    );
+  } finally {
+    if (fs.existsSync(screenshotPath)) {
+      fs.unlinkSync(screenshotPath);
+      console.log('Screenshot file deleted.');
+    } else {
+      console.log('Screenshot file does not exist, skipping deletion.');
+    }
   }
 }
 
