@@ -15,7 +15,7 @@ import { Page } from 'puppeteer';
 
 dotenv.config();
 
-const VERSION = '1.3.8';
+const VERSION = '1.3.9';
 
 const {
   IS_LOCAL_HOST,

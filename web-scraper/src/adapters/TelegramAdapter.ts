@@ -22,8 +22,11 @@ export default class TelegramAdapter implements NotificationService {
     try {
       const form = new FormData();
       form.append('chat_id', channelId);
-      form.append('photo', fs.createReadStream(photoPath));
       form.append('caption', errorMessage);
+
+      if (fs.existsSync(photoPath)) {
+        form.append('photo', fs.createReadStream(photoPath));
+      }
 
       const response = await axios.post(url, form, {
         headers: form.getHeaders()
