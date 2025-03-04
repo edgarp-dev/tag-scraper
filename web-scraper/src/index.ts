@@ -15,7 +15,7 @@ import { Page } from 'puppeteer';
 
 dotenv.config();
 
-const VERSION = '1.3.10';
+const VERSION = '1.3.11';
 
 const {
   IS_LOCAL_HOST,
@@ -46,7 +46,6 @@ async function scrapTags() {
   const screenshotPath = 'error_screenshot.png';
   let page: Page | undefined;
   try {
-    throw new Error('Test error');
     const browser = await webScraperAdapter.getBroswer(isLocalHost);
     page = await webScraperAdapter.getPage(browser);
 
