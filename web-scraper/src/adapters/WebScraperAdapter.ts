@@ -8,12 +8,12 @@ puppeteer.use(StealthPlugin());
 export default class WebScraperAdapter implements WebScraperService {
   private page: Page | undefined;
 
-  private broswer: Browser | undefined;
+  private browser: Browser | undefined;
 
-  public async getBroswer(isLocalHost: boolean): Promise<Browser> {
+  public async initScraper(isLocalHost: boolean): Promise<void> {
     const launchConfig: LaunchOptions = {
       headless: 'shell',
-      protocolTimeout: 60000,
+      protocolTimeout: 120000,
       defaultViewport: {
         width: 1366,
         height: 768
@@ -25,16 +25,18 @@ export default class WebScraperAdapter implements WebScraperService {
       launchConfig['executablePath'] = '/usr/bin/google-chrome';
     }
 
-    if (!this.broswer) {
-      this.broswer = await puppeteer.launch(launchConfig);
+    if (!this.browser) {
+      this.browser = await puppeteer.launch(launchConfig);
     }
-
-    return this.broswer;
   }
 
-  public async getPage(browser: Browser): Promise<Page> {
+  public async getWebScraper(): Promise<Page> {
+    if (!this.browser) {
+      throw new Error('Browser not initialized');
+    }
+
     if (!this.page) {
-      this.page = await browser.newPage();
+      this.page = await this.browser.newPage();
     }
 
     await this.page.setUserAgent(
@@ -44,8 +46,12 @@ export default class WebScraperAdapter implements WebScraperService {
     return this.page;
   }
 
-  public async openNewPage(browser: Browser): Promise<Page> {
-    const page = await browser.newPage();
+  public async openNewPage(): Promise<Page> {
+    if (!this.browser) {
+      throw new Error('Browser not initialized');
+    }
+
+    const page = await this.browser.newPage();
 
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -57,9 +63,17 @@ export default class WebScraperAdapter implements WebScraperService {
   }
 
   public async closeBrowser(): Promise<void> {
-    await this.broswer?.close();
+    if (!this.browser) {
+      throw new Error('Browser not initialized');
+    }
 
-    this.broswer = undefined;
+    await this.browser.close();
+
+    this.browser = undefined;
     this.page = undefined;
+  }
+
+  public async takeScreenshot(path: string): Promise<void> {
+    await this.page?.screenshot({ path });
   }
 }

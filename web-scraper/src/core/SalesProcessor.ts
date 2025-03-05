@@ -1,4 +1,10 @@
-import { CacheService, QueueService, TagProcessorService } from '../ports';
+import {
+  CacheService,
+  LoginService,
+  QueueService,
+  TagProcessorService,
+  WebScraperService
+} from '../ports';
 import { ScrapedContent } from '../ports/TagProcessorService';
 import { wait } from '../utils/promiseUtils';
 import { Sale } from './types';
@@ -6,36 +12,45 @@ import { Sale } from './types';
 export default class SalesProcessor {
   private readonly tags = ['bug', 'error', 'corran'];
 
+  private readonly webScrapperService: WebScraperService;
+
+  private readonly loginService: LoginService;
+
   private readonly tagProcessorService: TagProcessorService;
 
   private readonly cacheService: CacheService;
 
   private readonly queueService: QueueService;
 
-  private readonly env: string;
-
   constructor(
+    webScrapperService: WebScraperService,
+    loginService: LoginService,
     tagProcessorService: TagProcessorService,
     cacheService: CacheService,
-    queueService: QueueService,
-    env: string
+    queueService: QueueService
   ) {
+    this.webScrapperService = webScrapperService;
+    this.loginService = loginService;
     this.tagProcessorService = tagProcessorService;
     this.cacheService = cacheService;
     this.queueService = queueService;
-    this.env = env;
   }
 
   public async processSales(
     isLocalHost: boolean,
     forceSendNotitfication: boolean
   ): Promise<Sale[]> {
+    await this.webScrapperService.initScraper(isLocalHost);
+
     let sales: Sale[] = [];
+    await this.loginService.login(this.webScrapperService);
+
+    await wait(2);
 
     for (const tag of this.tags) {
       const url = `https://www.promodescuentos.com/search?q=${tag}`;
       const scrapedContent = await this.tagProcessorService.processTags(
-        isLocalHost,
+        this.webScrapperService,
         url
       );
 
@@ -44,7 +59,11 @@ export default class SalesProcessor {
       await wait(2);
     }
 
-    return this.getActiveSales(sales, forceSendNotitfication);
+    sales = this.getActiveSales(sales, forceSendNotitfication);
+
+    await this.webScrapperService.closeBrowser();
+
+    return sales;
   }
 
   private parseScrapedContent(scrapedContent: ScrapedContent[]): Sale[] {

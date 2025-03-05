@@ -1,3 +1,5 @@
+import WebScraperService from './WebScraperService';
+
 export type ScrapedContent = {
   threadId: string;
   id: string;
@@ -9,5 +11,8 @@ export type ScrapedContent = {
 };
 
 export interface TagProcessorService {
-  processTags(isLocalHost: boolean, url: string): Promise<ScrapedContent[]>;
+  processTags(
+    webScraperService: WebScraperService,
+    url: string
+  ): Promise<ScrapedContent[]>;
 }
