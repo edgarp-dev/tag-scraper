@@ -1,56 +1,77 @@
-import { LoginService, WebScraperService } from '../ports';
+import { LoginService, NotificationService, WebScraperService } from '../ports';
 
 export default class LoginAdapter implements LoginService {
-  private readonly webScraper: WebScraperService;
+  private readonly notificationService: NotificationService;
 
-  constructor(webScrapper: WebScraperService) {
-    this.webScraper = webScrapper;
+  private readonly screenshotPath = 'screenshot.png';
+
+  constructor(notificationService: NotificationService) {
+    this.notificationService = notificationService;
   }
 
-  public async login(isLocalHost: boolean): Promise<void> {
-    const browser = await this.webScraper.getBroswer(isLocalHost);
-    const page = await this.webScraper.getPage(browser);
+  public async login(webScraperService: WebScraperService): Promise<void> {
+    let webScraper;
+    try {
+      webScraper = await webScraperService.getWebScraper();
 
-    await page.goto('https://www.promodescuentos.com/', {
-      waitUntil: 'networkidle2'
-    });
-
-    const loginButton = await page.$('button[data-t="login"]');
-
-    if (loginButton) {
-      console.log('Logging in to page');
-
-      await page.$eval('button[data-t="login"]', (button) => button.click());
-
-      await page.waitForSelector('input[name="identity"]', { visible: true });
-      await page.$eval('input[name="identity"]', (input) => {
-        const email = 'mageerauld+7jety@gmail.com';
-        input.focus();
-        for (let i = 0; i < email.length; i++) {
-          const event = new KeyboardEvent('keydown', { bubbles: true });
-          input.dispatchEvent(event);
-          input.value += email[i];
-          const inputEvent = new Event('input', { bubbles: true });
-          input.dispatchEvent(inputEvent);
-        }
+      await webScraper.goto('https://www.promodescuentos.com/', {
+        waitUntil: 'networkidle2'
       });
 
-      await page.$eval('button[type="submit"]', (button) => button.click());
+      const loginButton = await webScraper.$('button[data-t="login"]');
 
-      await page.waitForSelector('input[name="password"]', { visible: true });
-      await page.$eval('input[name="password"]', (input) => {
-        const value = 'zWt7)I44z!8_';
-        input.focus();
-        for (let i = 0; i < value.length; i++) {
-          const event = new KeyboardEvent('keydown', { bubbles: true });
-          input.dispatchEvent(event);
-          input.value += value[i];
-          const inputEvent = new Event('input', { bubbles: true });
-          input.dispatchEvent(inputEvent);
-        }
-      });
+      if (loginButton) {
+        console.log('Logging in to page');
 
-      await page.$eval('button[type="submit"]', (button) => button.click());
+        await webScraper.$eval('button[data-t="login"]', (button) =>
+          button.click()
+        );
+
+        await webScraper.waitForSelector('input[name="identity"]', {
+          visible: true
+        });
+        await webScraper.$eval('input[name="identity"]', (input) => {
+          const email = 'mageerauld+7jety@gmail.com';
+          input.focus();
+          for (let i = 0; i < email.length; i++) {
+            const event = new KeyboardEvent('keydown', { bubbles: true });
+            input.dispatchEvent(event);
+            input.value += email[i];
+            const inputEvent = new Event('input', { bubbles: true });
+            input.dispatchEvent(inputEvent);
+          }
+        });
+
+        await webScraper.$eval('button[type="submit"]', (button) =>
+          button.click()
+        );
+
+        await webScraper.waitForSelector('input[name="password"]', {
+          visible: true
+        });
+        await webScraper.$eval('input[name="password"]', (input) => {
+          const value = 'zWt7)I44z!8_';
+          input.focus();
+          for (let i = 0; i < value.length; i++) {
+            const event = new KeyboardEvent('keydown', { bubbles: true });
+            input.dispatchEvent(event);
+            input.value += value[i];
+            const inputEvent = new Event('input', { bubbles: true });
+            input.dispatchEvent(inputEvent);
+          }
+        });
+
+        await webScraper.$eval('button[type="submit"]', (button) =>
+          button.click()
+        );
+      }
+    } catch (error) {
+      await webScraper?.screenshot({ path: this.screenshotPath });
+
+      await this.notificationService.notifyError(
+        (error as Error).message,
+        this.screenshotPath
+      );
     }
   }
 }
