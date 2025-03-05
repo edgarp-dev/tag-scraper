@@ -1,3 +1,3 @@
 export default interface NotificationService {
-  notifyError(message: string, photoPath: string): Promise<void>;
+  notifyError(message: string, screenshotPath: string): Promise<void>;
 }

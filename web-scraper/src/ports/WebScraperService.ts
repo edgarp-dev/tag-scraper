@@ -1,8 +1,9 @@
-import { Browser, Page } from 'puppeteer';
+import { Page } from 'puppeteer';
 
 export default interface WebScraperService {
-  getBroswer(isLocalHost: boolean): Promise<Browser>;
-  getPage(browser: Browser): Promise<Page>;
-  openNewPage(browser: Browser): Promise<Page>;
+  initScraper(isLocalHost: boolean): Promise<void>;
+  getWebScraper(): Promise<Page>;
+  openNewPage(): Promise<Page>;
+  takeScreenshot(path: string): Promise<void>;
   closeBrowser(): Promise<void>;
 }

@@ -10,8 +10,11 @@ export default class TelegramAdapter implements NotificationService {
     this.telegramToken = telegramToken;
   }
 
-  public async notifyError(message: string, photoPath: string): Promise<void> {
-    const screenshotExists = fs.existsSync(photoPath);
+  public async notifyError(
+    message: string,
+    screenshotPath: string
+  ): Promise<void> {
+    const screenshotExists = fs.existsSync(screenshotPath);
 
     const telegramApiUrl = 'https://api.telegram.org/bot';
     const channelId = '-1002253352797';
@@ -27,7 +30,7 @@ export default class TelegramAdapter implements NotificationService {
         const form = new FormData();
         form.append('chat_id', channelId);
         form.append('caption', errorMessage);
-        form.append('photo', fs.createReadStream(photoPath));
+        form.append('photo', fs.createReadStream(screenshotPath));
 
         const response = await axios.post(url, form, {
           headers: form.getHeaders()
@@ -44,6 +47,13 @@ export default class TelegramAdapter implements NotificationService {
       }
     } catch (error) {
       console.error('Error sending the message:', (error as Error).message);
+    } finally {
+      if (screenshotExists) {
+        fs.unlinkSync(screenshotPath);
+        console.log('Screenshot file deleted.');
+      } else {
+        console.log('Screenshot file does not exist, skipping deletion.');
+      }
     }
   }
 

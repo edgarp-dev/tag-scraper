@@ -1,3 +1,5 @@
+import WebScraperService from './WebScraperService';
+
 export default interface LoginService {
-  login(isLocalHost: boolean): Promise<void>;
+  login(webScraperService: WebScraperService): Promise<void>;
 }
