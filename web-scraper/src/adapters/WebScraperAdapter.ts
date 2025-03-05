@@ -13,7 +13,7 @@ export default class WebScraperAdapter implements WebScraperService {
   public async initScraper(isLocalHost: boolean): Promise<void> {
     const launchConfig: LaunchOptions = {
       headless: 'shell',
-      protocolTimeout: 60000,
+      protocolTimeout: 120000,
       defaultViewport: {
         width: 1366,
         height: 768
